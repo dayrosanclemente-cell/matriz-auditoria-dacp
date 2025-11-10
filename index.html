@@ -645,9 +645,9 @@
         }
 
         function renderDashboardCharts(actStats) {
-            // Destruir gráficos anteriores
-            if (state.charts.pieChart) state.charts.pieChart.destroy();
-            if (state.charts.barChart) state.charts.barChart.destroy();
+            // Se destruyen en renderApp antes de esta llamada, pero la doble seguridad nunca está de más.
+            // if (state.charts.pieChart) state.charts.pieChart.destroy();
+            // if (state.charts.barChart) state.charts.barChart.destroy();
             
             // Gráfico de Pastel (Cumplimiento General)
             const pieCtx = document.getElementById('compliancePieChart')?.getContext('2d');
@@ -726,11 +726,10 @@
         }
 
         function renderChecklistStageRadar(checklist) {
-            // Destruir gráfico anterior
-            if (state.charts.stageChart) state.charts.stageChart.destroy();
+            // if (state.charts.stageChart) state.charts.stageChart.destroy();
             
             const stats = calculateChecklistStats(checklist);
-            const etapas = Object.keys(stats.porEtapa);
+            const etapas = Array.from(new Set(checklist.map(item => item.etapa)));
             const scores = etapas.map(e => stats.porEtapa[e].pctCumplimiento);
 
             const ctx = document.getElementById('checklistRadarChart')?.getContext('2d');
@@ -773,7 +772,7 @@
 
         // NUEVA FUNCIÓN: Renderiza el gráfico de Radar para el Manager
         function renderManagerRadarChart(stats) {
-            if (state.charts.managerRadarChart) state.charts.managerRadarChart.destroy();
+            // if (state.charts.managerRadarChart) state.charts.managerRadarChart.destroy();
             
             const etapas = Object.keys(stats.porEtapa);
             const scores = etapas.map(e => stats.porEtapa[e].pctCumplimiento);
@@ -822,7 +821,7 @@
 
         // NUEVA FUNCIÓN: Renderiza el gráfico de Pastel/Donut para el Manager
         function renderManagerPieChart(stats) {
-            if (state.charts.managerPieChart) state.charts.managerPieChart.destroy();
+            // if (state.charts.managerPieChart) state.charts.managerPieChart.destroy();
             
             // Cumplidas = SECOP Cumple + FÍSICA Cumple
             const cumplidas = stats.cumplidasSECOP + stats.cumplidasFISICA; 
@@ -887,9 +886,9 @@
 
         // --- Funciones de Renderización de Pestañas ---
 
-        function renderDACPActivities() {
+        // ⚠️ CORRECCIÓN: Esta función ahora solo retorna el HTML, el gráfico se llama en renderApp
+        function renderDACPActivities(stats) {
             const filteredActivities = getActividadesFiltradas();
-            const stats = calcularEstadisticas(state.dacpActivities);
             const activitiesHtml = filteredActivities.map(act => {
                 const bgColor = act.cumplimiento === 'Cumple' ? 'bg-green-50' : 
                                 act.cumplimiento === 'No Cumple' ? 'bg-red-50' : 
@@ -924,9 +923,6 @@
                     </tr>
                 `;
             }).join('');
-
-            // Dibuja los gráficos del dashboard
-            renderDashboardCharts(stats);
 
             return `
                 <div class="mt-8">
@@ -996,14 +992,11 @@
                 </div>
             `;
         }
-
-        function renderContractChecklist() {
+        
+        // ⚠️ CORRECCIÓN: Esta función ahora solo retorna el HTML, el gráfico se llama en renderApp
+        function renderContractChecklist(stats) {
             const contractIds = Object.keys(state.contracts);
             const checklist = getCurrentChecklist();
-            const stats = calculateChecklistStats(checklist);
-
-            // Dibuja el gráfico de radar
-            renderChecklistStageRadar(checklist);
 
             const checklistHtml = checklist.map(item => {
                 const etapa = item.etapa;
@@ -1143,8 +1136,8 @@
             `;
         }
 
-        // NUEVA FUNCIÓN: Renderiza la pestaña Manager/Consolidado
-        function renderConsolidatedManager() {
+        // ⚠️ CORRECCIÓN: Esta función ahora solo retorna el HTML, el gráfico se llama en renderApp
+        function renderConsolidatedManager(stats) {
             const contractIds = Object.keys(state.contracts);
             const selectedContract = state.consolidatedContractId;
 
@@ -1152,13 +1145,6 @@
                 return `<p class="text-center text-xl text-gray-500 mt-20">No hay contratos disponibles para consolidar.</p>`;
             }
             
-            const checklist = getManagerChecklist();
-            const stats = calculateChecklistStats(checklist);
-
-            // Dibuja los gráficos del manager
-            renderManagerRadarChart(stats);
-            renderManagerPieChart(stats);
-
             return `
                 <div class="mt-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Módulo Manager: Consolidación por Contrato</h2>
@@ -1205,12 +1191,13 @@
 
         /**
          * Función principal que renderiza el contenido según la pestaña activa.
+         * ⚠️ CORRECCIÓN CLAVE: Los gráficos se inicializan AQUÍ, DESPUÉS de root.innerHTML
          */
         function renderApp() {
             const root = document.getElementById('root');
             if (!root) return;
 
-            // 1. Renderizar la estructura base y la navegación (fuera del 'root' pero en el mismo div)
+            // 1. Renderizar la estructura base y la navegación
             const navHtml = `
                 <header class="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1225,18 +1212,41 @@
                     </div>
                 </header>
             `;
-            // Reemplazar el contenido de 'root' con la navegación + contenido de la pestaña
             
             let contentHtml = '';
-            if (state.activeTab === 'checklist') {
-                contentHtml = renderContractChecklist();
+            let dacpStats, checklist, checklistStats, managerStats;
+
+            // Pre-cálculo de estadísticas y obtención de data relevante
+            if (state.activeTab === 'dashboard') {
+                dacpStats = calcularEstadisticas(state.dacpActivities);
+                contentHtml = renderDACPActivities(dacpStats);
+            } else if (state.activeTab === 'checklist') {
+                checklist = getCurrentChecklist();
+                checklistStats = calculateChecklistStats(checklist);
+                contentHtml = renderContractChecklist(checklistStats);
             } else if (state.activeTab === 'manager') {
-                contentHtml = renderConsolidatedManager();
-            } else {
-                contentHtml = renderDACPActivities();
+                checklist = getManagerChecklist();
+                managerStats = calculateChecklistStats(checklist);
+                contentHtml = renderConsolidatedManager(managerStats);
             }
-            
+
+            // 2. Insertar el HTML en el DOM
             root.innerHTML = navHtml + `<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">${contentHtml}</div>`;
+
+            // 3. Destruir e inicializar los gráficos AHORA que el HTML está en el DOM
+            // Destruir por seguridad antes de re-inicializar
+            destroyCharts(); 
+            
+            if (state.activeTab === 'dashboard') {
+                renderDashboardCharts(dacpStats);
+            } else if (state.activeTab === 'checklist') {
+                renderChecklistStageRadar(checklist);
+            } else if (state.activeTab === 'manager') {
+                if (state.consolidatedContractId) { // Solo si hay un contrato seleccionado
+                    renderManagerRadarChart(managerStats);
+                    renderManagerPieChart(managerStats);
+                }
+            }
         }
 
 
