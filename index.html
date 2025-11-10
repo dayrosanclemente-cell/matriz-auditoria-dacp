@@ -46,8 +46,8 @@
         // 0. CONFIGURACIÓN EN LA NUBE (Apps Script URL)
         // =================================================================
 
-        // 🟢 ¡URL ACTUALIZADA! Este es el único cambio.
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzD-DiWojvY3OdMkr_Bjy414kF7ltp3ZrEX-AvcptSleYDSMJ968GVU2Vuh8c7xdtZP/exec';
+        // 🟢 ¡VERIFIQUE! Asegúrese de que esta URL apunta a su Google Apps Script desplegado.
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzD-DiWojvY3OdMkr_Bjy414kF7ltp3ZrEX-AvcptSleYDSMJ968GVU2Vuh8c7xdzP/exec';
 
 
         // =================================================================
@@ -74,7 +74,7 @@
             { id: 16, tipo: 'Externa', proceso: 'COMPRAS RESPONSABLES', funcion: 'PENDIENTE DEFINIR', actividad: 'Formatos de seguimiento - Sostenibilidad Ambiental, Inclusión Social e Innovación', informe: 'PENDIENTE DEFINIR', frecuencia: 'Febrero y julio', reportaA: 'PENDIENTE DEFINIR', importancia: 70, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
         ];
 
-        // 1.2. Plantilla de Lista de Chequeo (ACTUALIZADA con las 31 actividades del usuario)
+        // 1.2. Plantilla de Lista de Chequeo (31 ítems)
         const INITIAL_ACTIVITIES = [
             // ETAPA: PLANEACIÓN DEL CONTRATO (Items 1-9)
             { id: 1, etapa: 'Planeación del Contrato', aspecto: 'Se cuenta con certificado de idoneidad', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
@@ -392,7 +392,9 @@
             }
         }
 
-
+        /**
+         * Destruye todas las instancias de Chart.js para evitar errores al re-renderizar.
+         */
         function destroyCharts() {
             if (state.charts.pieChart) state.charts.pieChart.destroy();
             if (state.charts.barChart) state.charts.barChart.destroy();
@@ -608,7 +610,7 @@
             });
             
             // CÁLCULO DE CUMPLIMIENTO TOTAL
-            // Contamos los cumplimientos totales (SECOP Cumple + FISICA Cumple)
+            // Contamos los cumplimientos totales (SECOP Cumple + FÍSICA Cumple)
             const cumplimientosTotales = stats.cumplidasSECOP + stats.cumplidasFISICA;
             // El total de posibles ítems de cumplimiento a evaluar es: Total de ítems * 2 (SECOP y FISICA)
             // Se asume que, idealmente, todos deberían ser "Cumple" en ambas categorías.
@@ -645,9 +647,6 @@
         }
 
         function renderDashboardCharts(actStats) {
-            // Se destruyen en renderApp antes de esta llamada, pero la doble seguridad nunca está de más.
-            // if (state.charts.pieChart) state.charts.pieChart.destroy();
-            // if (state.charts.barChart) state.charts.barChart.destroy();
             
             // Gráfico de Pastel (Cumplimiento General)
             const pieCtx = document.getElementById('compliancePieChart')?.getContext('2d');
@@ -726,7 +725,6 @@
         }
 
         function renderChecklistStageRadar(checklist) {
-            // if (state.charts.stageChart) state.charts.stageChart.destroy();
             
             const stats = calculateChecklistStats(checklist);
             const etapas = Array.from(new Set(checklist.map(item => item.etapa)));
@@ -772,7 +770,6 @@
 
         // NUEVA FUNCIÓN: Renderiza el gráfico de Radar para el Manager
         function renderManagerRadarChart(stats) {
-            // if (state.charts.managerRadarChart) state.charts.managerRadarChart.destroy();
             
             const etapas = Object.keys(stats.porEtapa);
             const scores = etapas.map(e => stats.porEtapa[e].pctCumplimiento);
@@ -821,7 +818,6 @@
 
         // NUEVA FUNCIÓN: Renderiza el gráfico de Pastel/Donut para el Manager
         function renderManagerPieChart(stats) {
-            // if (state.charts.managerPieChart) state.charts.managerPieChart.destroy();
             
             // Cumplidas = SECOP Cumple + FÍSICA Cumple
             const cumplidas = stats.cumplidasSECOP + stats.cumplidasFISICA; 
@@ -886,7 +882,6 @@
 
         // --- Funciones de Renderización de Pestañas ---
 
-        // ⚠️ CORRECCIÓN: Esta función ahora solo retorna el HTML, el gráfico se llama en renderApp
         function renderDACPActivities(stats) {
             const filteredActivities = getActividadesFiltradas();
             const activitiesHtml = filteredActivities.map(act => {
@@ -993,7 +988,6 @@
             `;
         }
         
-        // ⚠️ CORRECCIÓN: Esta función ahora solo retorna el HTML, el gráfico se llama en renderApp
         function renderContractChecklist(stats) {
             const contractIds = Object.keys(state.contracts);
             const checklist = getCurrentChecklist();
@@ -1136,7 +1130,6 @@
             `;
         }
 
-        // ⚠️ CORRECCIÓN: Esta función ahora solo retorna el HTML, el gráfico se llama en renderApp
         function renderConsolidatedManager(stats) {
             const contractIds = Object.keys(state.contracts);
             const selectedContract = state.consolidatedContractId;
@@ -1191,7 +1184,7 @@
 
         /**
          * Función principal que renderiza el contenido según la pestaña activa.
-         * ⚠️ CORRECCIÓN CLAVE: Los gráficos se inicializan AQUÍ, DESPUÉS de root.innerHTML
+         * ⚠️ CORRECCIÓN CLAVE: Inicializa los gráficos DENTRO de un setTimeout(0)
          */
         function renderApp() {
             const root = document.getElementById('root');
@@ -1234,19 +1227,21 @@
             root.innerHTML = navHtml + `<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">${contentHtml}</div>`;
 
             // 3. Destruir e inicializar los gráficos AHORA que el HTML está en el DOM
-            // Destruir por seguridad antes de re-inicializar
             destroyCharts(); 
             
-            if (state.activeTab === 'dashboard') {
-                renderDashboardCharts(dacpStats);
-            } else if (state.activeTab === 'checklist') {
-                renderChecklistStageRadar(checklist);
-            } else if (state.activeTab === 'manager') {
-                if (state.consolidatedContractId) { // Solo si hay un contrato seleccionado
-                    renderManagerRadarChart(managerStats);
-                    renderManagerPieChart(managerStats);
+            // ⚠️ MODIFICACIÓN CLAVE: Usar setTimeout(0) para asegurar que el DOM ha sido renderizado.
+            setTimeout(() => {
+                if (state.activeTab === 'dashboard') {
+                    renderDashboardCharts(dacpStats);
+                } else if (state.activeTab === 'checklist') {
+                    renderChecklistStageRadar(checklist);
+                } else if (state.activeTab === 'manager') {
+                    if (state.consolidatedContractId) { // Solo si hay un contrato seleccionado
+                        renderManagerRadarChart(managerStats);
+                        renderManagerPieChart(managerStats);
+                    }
                 }
-            }
+            }, 0); // Micro-delay para asegurar que el canvas es visible y tiene contexto.
         }
 
 
