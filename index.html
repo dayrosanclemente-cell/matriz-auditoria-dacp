@@ -135,9 +135,8 @@
         ];
 
         // =================================================================
-        // 3. ESTADO Y LÓGICA DE ALMACENAMIENTO
+        // 3. ESTADO Y LÓGICA DE ALMACENAMIENTO (Se mantienen sin cambios)
         // =================================================================
-
         const getActivitiesStorageKey = (contractId) => `contract_${contractId}_checklist`;
         const ALL_CONTRACT_DATA_KEY = 'all_contract_data';
 
@@ -302,7 +301,7 @@
         // =================================================================
 
         /**
-         * LÓGICA DACP ACTIVITIES (MATRIZ DE EVALUACIÓN)
+         * LÓGICA DACP ACTIVITIES (MATRIZ DE EVALUACIÓN) (Se mantienen sin cambios)
          */
 
         // Función para actualizar items de la Matriz DACP
@@ -418,15 +417,25 @@
                 if (item.id === activityId) {
                     let updatedItem = { ...item };
 
-                    if (campo.startsWith('SECOP_')) {
+                    if (campo.startsWith('SECOP_') && valor !== null) {
                         updatedItem.SECOP_CUM = null;
                         updatedItem.SECOP_NCUM = null;
                         updatedItem[campo] = valor;
-                    } else if (campo.startsWith('FISICA_')) {
+                    } else if (campo.startsWith('FISICA_') && valor !== null) {
                         updatedItem.FISICA_CUM = null;
                         updatedItem.FISICA_NCUM = null;
                         updatedItem.FISICA_PARCIAL = null;
                         updatedItem[campo] = valor;
+                    } else if (valor === null) {
+                         // Manejo de la deselección (toggle)
+                         if (campo.startsWith('SECOP_')) {
+                             updatedItem.SECOP_CUM = null;
+                             updatedItem.SECOP_NCUM = null;
+                         } else if (campo.startsWith('FISICA_')) {
+                             updatedItem.FISICA_CUM = null;
+                             updatedItem.FISICA_NCUM = null;
+                             updatedItem.FISICA_PARCIAL = null;
+                         }
                     } else {
                         updatedItem[campo] = valor;
                     }
@@ -448,7 +457,7 @@
         window.actualizarChecklistItem = actualizarChecklistItem;
         
         // =================================================================
-        // FIX: NUEVA FUNCIÓN PARA GESTIONAR EL CLICK EN EL RADIO BUTTON (SOPORTA TOGGLE)
+        // FIX: FUNCIÓN PARA GESTIONAR EL CLICK EN EL RADIO BUTTON (SOPORTA TOGGLE) (Se mantiene sin cambios)
         // =================================================================
         window.handleChecklistRadioClick = function(id, campo, value) {
             const isConsolidatedView = state.activeTab === 'consolidacion';
@@ -468,7 +477,7 @@
         };
         // =================================================================
 
-        // Exportación a CSV para el CHECKLIST (AUDITOR)
+        // Exportación a CSV para el CHECKLIST (AUDITOR) (Se mantienen sin cambios)
         function exportChecklistToExcel(contractId, checklist) {
             const headers = ["ID_ITEM", "ID_CONTRATO", "Etapa", "Aspecto", "SECOP_CUM", "SECOP_NCUM", "FISICA_CUM", "FISICA_NCUM", "FISICA_PARCIAL", "OBS_FISICA", "OBS_SECOP"];
             const data = checklist.map(item => [
@@ -499,7 +508,7 @@
             }
         }
 
-        // Función para calcular estadísticas del Checklist
+        // Función para calcular estadísticas del Checklist (Se mantienen sin cambios)
         function calculateChecklistStats(checklist) {
             const total = checklist.length;
             let cumplidasSECOP = 0;
@@ -545,7 +554,7 @@
         }
 
         // =================================================================
-        // 5. LÓGICA DE IMPORTACIÓN Y CONSOLIDACIÓN
+        // 5. LÓGICA DE IMPORTACIÓN Y CONSOLIDACIÓN (Se mantienen sin cambios)
         // =================================================================
 
         function parseCSV(text) {
@@ -647,7 +656,7 @@
 
 
         // =================================================================
-        // 6. FUNCIONES DE RENDERIZADO
+        // 6. FUNCIONES DE RENDERIZADO (DACP y Dashboard) (Se mantienen sin cambios)
         // =================================================================
 
         // Variables globales para las instancias de Chart.js
@@ -948,6 +957,7 @@
                     currentEtapa = item.etapa;
                 }
 
+                // CORRECCIÓN: Se eliminó `return false;` de todos los onclick para resolver el problema de deselección inmediata.
                 html += `
                     <tr class="bg-white border-b hover:bg-gray-50">
                         <td class="px-2 py-2 text-center">${item.id}</td>
@@ -955,24 +965,24 @@
 
                         <td class="text-center px-2 py-2">
                             <input type="radio" name="secop_status_${item.id}" data-id="${item.id}" data-campo="SECOP_CUM" ${item.SECOP_CUM ? 'checked' : ''} class="w-4 h-4 text-green-600 border-gray-300 input-checklist-radio" 
-                                onclick="handleChecklistRadioClick(${item.id}, 'SECOP_CUM', 'CUM'); return false;">
+                                onclick="handleChecklistRadioClick(${item.id}, 'SECOP_CUM', 'CUM');">
                         </td>
                         <td class="text-center px-2 py-2">
                             <input type="radio" name="secop_status_${item.id}" data-id="${item.id}" data-campo="SECOP_NCUM" ${item.SECOP_NCUM ? 'checked' : ''} class="w-4 h-4 text-red-600 border-gray-300 input-checklist-radio" 
-                                onclick="handleChecklistRadioClick(${item.id}, 'SECOP_NCUM', 'NCUM'); return false;">
+                                onclick="handleChecklistRadioClick(${item.id}, 'SECOP_NCUM', 'NCUM');">
                         </td>
 
                         <td class="text-center px-2 py-2">
                             <input type="radio" name="fisica_status_${item.id}" data-id="${item.id}" data-campo="FISICA_CUM" ${item.FISICA_CUM ? 'checked' : ''} class="w-4 h-4 text-green-600 border-gray-300 input-checklist-radio" 
-                                onclick="handleChecklistRadioClick(${item.id}, 'FISICA_CUM', 'CUM'); return false;">
+                                onclick="handleChecklistRadioClick(${item.id}, 'FISICA_CUM', 'CUM');">
                         </td>
                         <td class="text-center px-2 py-2">
                             <input type="radio" name="fisica_status_${item.id}" data-id="${item.id}" data-campo="FISICA_NCUM" ${item.FISICA_NCUM ? 'checked' : ''} class="w-4 h-4 text-red-600 border-gray-300 input-checklist-radio" 
-                                onclick="handleChecklistRadioClick(${item.id}, 'FISICA_NCUM', 'NCUM'); return false;">
+                                onclick="handleChecklistRadioClick(${item.id}, 'FISICA_NCUM', 'NCUM');">
                         </td>
                          <td class="text-center px-2 py-2">
                             <input type="radio" name="fisica_status_${item.id}" data-id="${item.id}" data-campo="FISICA_PARCIAL" ${item.FISICA_PARCIAL ? 'checked' : ''} class="w-4 h-4 text-yellow-600 border-gray-300 input-checklist-radio" 
-                                onclick="handleChecklistRadioClick(${item.id}, 'FISICA_PARCIAL', 'PARCIAL'); return false;">
+                                onclick="handleChecklistRadioClick(${item.id}, 'FISICA_PARCIAL', 'PARCIAL');">
                         </td>
 
                         <td class="px-4 py-2">
@@ -992,6 +1002,9 @@
             `;
             return html;
         }
+
+        // El resto de las funciones (renderMultiContractChecklist, renderConsolidationView, renderTabContent, renderTabs, renderApp, Listeners) se mantienen sin cambios.
+        // ... (Omitidas por brevedad, pero deben estar en el código final)
 
         function renderMultiContractChecklist() {
             let optionsHtml = state.allContracts.filter(id => loadActivities(id).some(item => item.SECOP_CUM !== null)).map(id =>
