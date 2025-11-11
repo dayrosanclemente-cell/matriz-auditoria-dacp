@@ -18,7 +18,7 @@
             max-width: 100%;
             height: auto;
         }
-        /* === NUEVO CSS PARA LISTA DE CHEQUEO MULTI-CONTRATO === */
+        /* Estilos para el texto y textarea de la tabla */
         .table-textarea {
             width: 100%;
             min-height: 40px;
@@ -31,1226 +31,586 @@
         /* Clase para pestañas activas */
         .tab-active {
             border-bottom-width: 2px;
-            border-bottom-color: #3b82f6; /* blue-500 */
-            color: #3b82f6; /* blue-500 */
+            border-bottom-color: #3b82f6; /* blue-600 */
+            color: #1e40af; /* blue-800 */
+            font-weight: 600;
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+<body>
+    <div id="root" class="min-h-screen bg-gray-50">
+        <header class="bg-white shadow-md p-4 sticky top-0 z-10">
+            <h1 class="text-2xl font-bold text-gray-800">Dashboard de Auditoría DACP</h1>
+            <div id="tab-container" class="mt-4 border-b border-gray-200">
+                <button id="tab-dashboard" onclick="setActiveTab('dashboard')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Dashboard</button>
+                <button id="tab-activities" onclick="setActiveTab('activities')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Actividades DACP</button>
+                <button id="tab-checklist" onclick="setActiveTab('checklist')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Lista de Chequeo Contractual</button>
+                <button id="tab-manager" onclick="setActiveTab('manager')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Consolidado por Gestor</button>
+            </div>
+        </header>
 
-    <div id="root" class="p-4 sm:p-6">
+        <main class="p-6">
+            <div id="dashboard-view" class="tab-view" style="display: none;">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-4 shadow rounded-lg">
+                        <h2 class="text-lg font-semibold mb-2">Resumen de Cumplimiento DACP</h2>
+                        <canvas id="complianceChart"></canvas>
+                    </div>
+                    <div class="bg-white p-4 shadow rounded-lg lg:col-span-2">
+                        <h2 class="text-lg font-semibold mb-2">Importancia vs Cumplimiento</h2>
+                        <canvas id="importanceChart"></canvas>
+                    </div>
+                </div>
+                <div id="summary-section" class="bg-white p-6 shadow rounded-lg">
+                    <h2 class="text-xl font-bold mb-4">Resumen General</h2>
+                    <p id="summary-text" class="text-gray-700"></p>
+                </div>
+            </div>
+
+            <div id="activities-view" class="tab-view" style="display: none;">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Registro de Actividades DACP (16 ítems)</h2>
+                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150">
+                        Exportar a Excel
+                    </button>
+                </div>
+                <div class="bg-white shadow rounded-lg overflow-x-auto">
+                    <table id="activities-table" class="min-w-full divide-y divide-gray-200">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="checklist-view" class="tab-view" style="display: none;">
+                <h2 class="text-xl font-bold mb-4">Lista de Chequeo por Contrato (31 ítems)</h2>
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="flex-grow">
+                        <label for="contract-select" class="block text-sm font-medium text-gray-700">Contrato Actual</label>
+                        <select id="contract-select" onchange="handleContractSelectChange(this.value)" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <button onclick="handleCreateNewContract()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 mt-5 whitespace-nowrap">
+                        Crear Nuevo Contrato
+                    </button>
+                    <button onclick="exportChecklistToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 mt-5 whitespace-nowrap">
+                        Exportar Checklist
+                    </button>
+                </div>
+
+                <div class="bg-white shadow rounded-lg overflow-x-auto">
+                    <table id="checklist-table" class="min-w-full divide-y divide-gray-200">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="manager-view" class="tab-view" style="display: none;">
+                <h2 class="text-xl font-bold mb-4">Consolidado por Gestor/Supervisor</h2>
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="flex-grow">
+                        <label for="manager-select" class="block text-sm font-medium text-gray-700">Gestor/Supervisor</label>
+                        <select id="manager-select" onchange="handleManagerSelectChange(this.value)" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <button onclick="exportManagerStatsToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 mt-5 whitespace-nowrap">
+                        Exportar Estadísticas del Gestor
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div id="manager-summary-card" class="md:col-span-3 bg-white p-6 shadow rounded-lg">
+                        <h3 class="text-lg font-semibold">Estadísticas del Gestor: <span id="manager-name-display">Ninguno Seleccionado</span></h3>
+                        <p id="manager-stats-display" class="mt-2 text-gray-700">Seleccione un gestor para ver sus estadísticas consolidadas.</p>
+                    </div>
+                </div>
+                
+                <div id="manager-checklist-section" class="bg-white shadow rounded-lg overflow-x-auto mt-6">
+                     </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        // =================================================================
-        // 0. CONFIGURACIÓN EN LA NUBE (Apps Script URL)
-        // =================================================================
+        // 1. CONFIGURACIÓN CRÍTICA Y DATOS INICIALES
+        // -----------------------------------------------------------------
 
-        // 🟢 ¡PEGA TU NUEVO URL AQUÍ! Reemplace TODO este string con el URL de su Apps Script recién desplegado.
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyUuNUDpX7xvSYJAALesGbXjgmyCFqYa13fCe1_QQzst-PZ8TQv_loMnGyRvPVSrIU-/exec';
+        // ⚠️ ¡IMPORTANTE! REEMPLAZA ESTA URL con la URL de tu Web App de Google Apps Script
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwxjAeNsDF9b6fin9ISpjA6FZQVJRYnBKZkDvHHbXVqO4QYIrcr0cbZu6vXFjVuIS9O/exec'; 
 
-
-        // =================================================================
-        // 1. DATA DEL DEPARTAMENTO ADMINISTRATIVO DE CONTRATACIÓN PÚBLICA (DACP)
-        // =================================================================
-
-        // 1.1. Actividades (Matriz Principal) - (La matriz original de 16 ítems)
-        const DEFAULT_DACP_ACTIVITIES = [
-            { id: 1, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'ESTRUCTURACIÓN DEL PROCESO DE CONTRATACIÓN', informe: 'PENDIENTE DEFINIR', frecuencia: 'TRIMESTRAL', reportaA: 'PENDIENTE DEFINIR', importancia: 95, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 2, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'VALIDACION APLICATIVO CONTRATISTA', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 85, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 3, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'VALIDACION HOJA DE VIDA DE SIGEP', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 80, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 4, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'VALIDACION DE DOCUMENTOS CONTRACTUALES', informe: 'PENDIENTE DEFINIR', frecuencia: '3 DIAS A LA EJECUCIÓN DEL CONTRATO', reportaA: 'PENDIENTE DEFINIR', importancia: 90, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 5, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'AFILIACIÓN ARL', informe: 'PENDIENTE DEFINIR', frecuencia: '5 primeros dias de cada mes (mes vencido)', reportaA: 'PENDIENTE DEFINIR', importancia: 75, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 6, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'REQUERIR Y APOYAR EN LA ELABORACION DEL PLAN DE TRABAJO', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 85, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 7, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'REVISION DE INFORMES DE GESTIÓN', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 85, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 8, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'SEGUIMIENTO A ACTIVIDADES DESIGNADAS', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 80, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 9, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'Actividades contractuales vs actividades presentadas', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 90, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 10, tipo: 'Interna', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'Informes mensual contratos de prestacion de servicios', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 85, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 11, tipo: 'Interna', proceso: 'DELEGACIONES', funcion: 'PENDIENTE DEFINIR', actividad: 'Gestión de solicitudes de delegación especial de facultades contractuales', informe: 'PENDIENTE DEFINIR', frecuencia: 'Según necesidad', reportaA: 'PENDIENTE DEFINIR', importancia: 95, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 12, tipo: 'Externa', proceso: 'GESTIÓN CONTRACTUAL', funcion: 'PENDIENTE DEFINIR', actividad: 'Publicaciones informes de supervision en el SECOP II', informe: 'PENDIENTE DEFINIR', frecuencia: 'Mensualizada', reportaA: 'PENDIENTE DEFINIR', importancia: 90, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 13, tipo: 'Externa', proceso: 'DELEGACIONES', funcion: 'PENDIENTE DEFINIR', actividad: 'Remisión de solicitud formal con documentos precontractuales', informe: 'PENDIENTE DEFINIR', frecuencia: 'Según necesidad', reportaA: 'PENDIENTE DEFINIR', importancia: 90, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 14, tipo: 'Externa', proceso: 'EVALUACIÓN DE PROVEEDORES', funcion: 'PENDIENTE DEFINIR', actividad: 'Revaluación de proveedores - Consolidación en hoja de cálculo', informe: 'PENDIENTE DEFINIR', frecuencia: 'Semestralmente', reportaA: 'PENDIENTE DEFINIR', importancia: 70, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 15, tipo: 'Externa', proceso: 'GESTIÓN DEL CONOCIMIENTO', funcion: 'PENDIENTE DEFINIR', actividad: 'Lecciones Aprendidas - Compras públicas frecuentes, riesgosas, complejas', informe: 'PENDIENTE DEFINIR', frecuencia: 'Anualmente', reportaA: 'PENDIENTE DEFINIR', importancia: 65, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
-            { id: 16, tipo: 'Externa', proceso: 'COMPRAS RESPONSABLES', funcion: 'PENDIENTE DEFINIR', actividad: 'Formatos de seguimiento - Sostenibilidad Ambiental, Inclusión Social e Innovación', informe: 'PENDIENTE DEFINIR', frecuencia: 'Febrero y julio', reportaA: 'PENDIENTE DEFINIR', importancia: 70, cumplimiento: null, observaciones: '', fechaEvaluacion: '' },
+        // ⚠️ Nota: Los datos iniciales serán reemplazados por lo que se cargue de la nube
+        // El estado inicial (si no hay datos guardados)
+        const initialActivities = [
+            // Basado en el JSON que proporcionó en la pregunta anterior (16 actividades)
+            {id:1, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'ESTRUCTURACIÓN DEL PROCESO DE CONTRATACIÓN', informe:'PENDIENTE DEFINIR', frecuencia:'TRIMESTRAL', reportaA:'PENDIENTE DEFINIR', importancia:95, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:2, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'VALIDACION APLICATIVO CONTRATISTA', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:85, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:3, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'VALIDACION HOJA DE VIDA DE SIGEP', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:80, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:4, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'VALIDACION DE DOCUMENTOS CONTRACTUALES', informe:'PENDIENTE DEFINIR', frecuencia:'3 DIAS A LA EJECUCIÓN DEL CONTRATO', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:5, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'AFILIACIÓN ARL', informe:'PENDIENTE DEFINIR', frecuencia:'5 primeros dias de cada mes (mes vencido)', reportaA:'PENDIENTE DEFINIR', importancia:75, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:6, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'REQUERIR Y APOYAR EN LA ELABORACION DEL PLAN DE TRABAJO', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:85, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:7, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'REVISION DE INFORMES DE GESTIÓN', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:85, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:8, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'SEGUIMIENTO A ACTIVIDADES DESIGNADAS', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:80, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:9, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'Actividades contractuales vs actividades presentadas', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:10, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'Informes mensual contratos de prestacion de servicios', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:85, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:11, tipo:'Interna', proceso:'DELEGACIONES', funcion:'PENDIENTE DEFINIR', actividad:'Gestión de solicitudes de delegación especial de facultades contractuales', informe:'PENDIENTE DEFINIR', frecuencia:'Según necesidad', reportaA:'PENDIENTE DEFINIR', importancia:95, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:12, tipo:'Externa', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'Publicaciones informes de supervision en el SECOP II', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:13, tipo:'Externa', proceso:'DELEGACIONES', funcion:'PENDIENTE DEFINIR', actividad:'Remisión de solicitud formal con documentos precontractuales', informe:'PENDIENTE DEFINIR', frecuencia:'Según necesidad', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:14, tipo:'Externa', proceso:'EVALUACIÓN DE PROVEEDORES', funcion:'PENDIENTE DEFINIR', actividad:'Revaluación de proveedores - Consolidación en hoja de cálculo', informe:'PENDIENTE DEFINIR', frecuencia:'Semestralmente', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:15, tipo:'Externa', proceso:'GESTIÓN DEL CONOCIMIENTO', funcion:'PENDIENTE DEFINIR', actividad:'Lecciones Aprendidas - Compras públicas frecuentes, riesgosas, complejas', informe:'PENDIENTE DEFINIR', frecuencia:'Anualmente', reportaA:'PENDIENTE DEFINIR', importancia:65, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:16, tipo:'Externa', proceso:'COMPRAS RESPONSABLES', funcion:'PENDIENTE DEFINIR', actividad:'Formatos de seguimiento - Sostenibilidad Ambiental, Inclusión Social e Innovación', informe:'PENDIENTE DEFINIR', frecuencia:'Febrero y julio', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''}
         ];
-
-        // 1.2. Plantilla de Lista de Chequeo (31 ítems)
-        const INITIAL_ACTIVITIES = [
-            // ETAPA: PLANEACIÓN DEL CONTRATO (Items 1-9)
-            { id: 1, etapa: 'Planeación del Contrato', aspecto: 'Se cuenta con certificado de idoneidad', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 2, etapa: 'Planeación del Contrato', aspecto: 'Acto de delegación para contratar', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 3, etapa: 'Planeación del Contrato', aspecto: 'Ficha tecnica', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 4, etapa: 'Planeación del Contrato', aspecto: 'La necesidad del servicio está justificada y documentada.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 5, etapa: 'Planeación del Contrato', aspecto: 'El contrato está incluido en el Plan Anual de Adquisiciones (PAA).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 6, etapa: 'Planeación del Contrato', aspecto: 'Se cuenta con estudio previo (El perfil, los costos, requisitos minimos de formación y experiencia, tabla de honorarios acorde al valor asignado) y estudio de mercado.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 7, etapa: 'Planeación del Contrato', aspecto: 'El objeto contractual está claramente definido y alineado con las funciones del área.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 8, etapa: 'Planeación del Contrato', aspecto: 'Existen CDP y RP debidamente aprobados.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 9, etapa: 'Planeación del Contrato', aspecto: 'Se verificaron inhabilidades e incompatibilidades del contratista.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            
-            // ETAPA: SELECCIÓN Y CONTRATACIÓN (Items 10-13)
-            { id: 10, etapa: 'Selección y Contratación', aspecto: 'La modalidad de contratación fue correctamente aplicada (OPS).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 11, etapa: 'Selección y Contratación', aspecto: 'El proceso fue publicado en SECOP con los documentos requeridos.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 12, etapa: 'Selección y Contratación', aspecto: 'El contrato está firmado con todas las cláusulas exigidas.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 13, etapa: 'Selección y Contratación', aspecto: 'Existe acta de inicio y designación formal de supervisor.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            
-            // ETAPA: EJECUCIÓN DEL CONTRATO (Items 14-18)
-            { id: 14, etapa: 'Ejecución del Contrato', aspecto: 'ARL (Afiliación).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 15, etapa: 'Ejecución del Contrato', aspecto: 'Documento equivalente (Seguridad Social).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 16, etapa: 'Ejecución del Contrato', aspecto: 'El contratista entrega informes mensuales de gestión de actividades.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 17, etapa: 'Ejecución del Contrato', aspecto: 'Los productos o entregables cumplen con el objeto contractual.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 18, etapa: 'Ejecución del Contrato', aspecto: 'Los pagos se realizan solo contra informes aprobados por el supervisor (SECOP).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-
-            // ETAPA: CONTROL Y SUPERVISIÓN (Items 19-21)
-            { id: 19, etapa: 'Control y Supervisión', aspecto: 'El supervisor tiene designación oficial y cumple sus funciones.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 20, etapa: 'Control y Supervisión', aspecto: 'Existen informes de supervisión con fechas y firmas.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 21, etapa: 'Control y Supervisión', aspecto: 'Entrega de documentos por parte del Supervisor a la DACP.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-
-            // ETAPA: CIERRE Y LIQUIDACIÓN (Items 22-24)
-            { id: 22, etapa: 'Cierre y Liquidación', aspecto: 'Existe acta de recibo final o informe de cumplimiento.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 23, etapa: 'Cierre y Liquidación', aspecto: 'Se realizó la liquidación del contrato (bilateral o unilateral).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 24, etapa: 'Cierre y Liquidación', aspecto: 'El cierre y liquidación están publicados en SECOP.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-
-            // ETAPA: CALIDAD (ISO 9001) (Items 25-27)
-            { id: 25, etapa: 'Calidad (ISO 9001)', aspecto: 'Se controla la documentación y registros del proceso.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 26, etapa: 'Calidad (ISO 9001)', aspecto: 'El personal a cargo del proceso es competente y tiene formación adecuada.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 27, etapa: 'Calidad (ISO 9001)', aspecto: 'Se hace seguimiento a indicadores del proceso (tiempos, cumplimiento, satisfacción).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-
-            // ETAPA: TRANSPARENCIA Y CUMPLIMIENTO (Items 28-31)
-            { id: 28, etapa: 'Transparencia y Cumplimiento', aspecto: 'Cumple con la Ley 80, Ley 1150 y Decreto 1082 de 2015.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 29, etapa: 'Transparencia y Cumplimiento', aspecto: 'Toda la información contractual está publicada en SECOP.', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 30, etapa: 'Transparencia y Cumplimiento', aspecto: 'Se aplica la Ley 1712 de 2014 (Transparencia).', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" },
-            { id: 31, etapa: 'Transparencia y Cumplimiento', aspecto: 'Contratista y supervisor declaran ausencia de conflicto de intereses', "SECOP II - Cumple": "", "SECOP II - No Cumple": "", "CARPETA FISICA - Cumple": "", "CARPETA FISICA - No Cumple": "", "CARPETA FISICA - No Aplica/ Parcialmente": "", evidencia: "", obs_fisica: "", obs_secop: "" }
-        ];
-
-        const INITIAL_CONTRACT_ID = "4125.010.26.1.001-2025";
         
-        // Función para inicializar datos de contrato de ejemplo (solo si la nube está vacía)
-        function loadInitialContracts() {
-            // Devuelve un objeto con la plantilla como el primer contrato
-            return {
-                [INITIAL_CONTRACT_ID]: JSON.parse(JSON.stringify(INITIAL_ACTIVITIES))
-            };
-        }
-
-
-        // =================================================================
-        // 2. ESTADO DE LA APLICACIÓN Y PERSISTENCIA (MIGRADO A LA NUBE)
-        // =================================================================
+        // Plantilla de lista de chequeo (31 ítems) - Usando los datos que usted proporcionó
+        const initialChecklistTemplate = [
+            {id:1, etapa:"Planeación del Contrato", aspecto:"Se cuenta con certificado de idoneidad", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:2, etapa:"Planeación del Contrato", aspecto:"Acto de delegación para contratar", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:3, etapa:"Planeación del Contrato", aspecto:"Ficha tecnica", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:4, etapa:"Planeación del Contrato", aspecto:"La necesidad del servicio está justificada y documentada.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:5, etapa:"Planeación del Contrato", aspecto:"El contrato está incluido en el Plan Anual de Adquisiciones (PAA).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:6, etapa:"Planeación del Contrato", aspecto:"Se cuenta con estudio previo (El perfil, los costos, requisitos minimos de formación y experiencia, tabla de honorarios acorde al valor asignado) y estudio de mercado.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:7, etapa:"Planeación del Contrato", aspecto:"El objeto contractual está claramente definido y alineado con las funciones del área.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:8, etapa:"Planeación del Contrato", aspecto:"Existen CDP y RP debidamente aprobados.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:9, etapa:"Planeación del Contrato", aspecto:"Se verificaron inhabilidades e incompatibilidades del contratista.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:10, etapa:"Selección y Contratación", aspecto:"La modalidad de contratación fue correctamente aplicada (OPS).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:11, etapa:"Selección y Contratación", aspecto:"El proceso fue publicado en SECOP con los documentos requeridos.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:12, etapa:"Selección y Contratación", aspecto:"El contrato está firmado con todas las cláusulas exigidas.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:13, etapa:"Selección y Contratación", aspecto:"Existe acta de inicio y designación formal de supervisor.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:14, etapa:"Ejecución del Contrato", aspecto:"ARL (Afiliación).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:15, etapa:"Ejecución del Contrato", aspecto:"Documento equivalente (Seguridad Social).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:16, etapa:"Ejecución del Contrato", aspecto:"El contratista entrega informes mensuales de gestión de actividades.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:17, etapa:"Ejecución del Contrato", aspecto:"Los productos o entregables cumplen con el objeto contractual.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:18, etapa:"Ejecución del Contrato", aspecto:"Los pagos se realizan solo contra informes aprobados por el supervisor (SECOP).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:19, etapa:"Control y Supervisión", aspecto:"El supervisor tiene designación oficial y cumple sus funciones.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:20, etapa:"Control y Supervisión", aspecto:"Existen informes de supervisión con fechas y firmas.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:21, etapa:"Control y Supervisión", aspecto:"Entrega de documentos por parte del Supervisor a la DACP.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:22, etapa:"Cierre y Liquidación", aspecto:"Existe acta de recibo final o informe de cumplimiento.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:23, etapa:"Cierre y Liquidación", aspecto:"Se realizó la liquidación del contrato (bilateral o unilateral).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:24, etapa:"Cierre y Liquidación", aspecto:"El cierre y liquidación están publicados en SECOP.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:25, etapa:"Calidad (ISO 9001)", aspecto:"Se controla la documentación y registros del proceso.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:26, etapa:"Calidad (ISO 9001)", aspecto:"El personal a cargo del proceso es competente y tiene formación adecuada.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:27, etapa:"Calidad (ISO 9001)", aspecto:"Se hace seguimiento a indicadores del proceso (tiempos, cumplimiento, satisfacción).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:28, etapa:"Transparencia y Cumplimiento", aspecto:"Cumple con la Ley 80, Ley 1150 y Decreto 1082 de 2015.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:29, etapa:"Transparencia y Cumplimiento", aspecto:"Toda la información contractual está publicada en SECOP.", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:30, etapa:"Transparencia y Cumplimiento", aspecto:"Se aplica la Ley 1712 de 2014 (Transparencia).", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
+            {id:31, etapa:"Transparencia y Cumplimiento", aspecto:"Contratista y supervisor declaran ausencia de conflicto de intereses", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop":""}
+        ];
 
         let state = {
             activeTab: 'dashboard',
-            dacpActivities: [], // Se cargará desde la nube
-            contracts: {},      // Objeto: { 'ID_Contrato': [Array de checklist] }
-            currentContractId: INITIAL_CONTRACT_ID, // ID usado en la pestaña 'Lista de Chequeo'
-            consolidatedContractId: null, // NUEVO: ID usado en la pestaña 'Manager'
-            filtroTipo: 'Todos',
-            filtroCumplimiento: 'Todos',
-            charts: {
-                barChart: null,
-                pieChart: null,
-                radarChart: null,
-                stageChart: null,
-                // NUEVO: Gráficos del Manager
-                managerRadarChart: null, 
-                managerPieChart: null
-            },
+            dacpActivities: initialActivities,
+            contracts: {}, // Almacena las listas de chequeo por ID de contrato: { 'ID_1': [checklist], 'ID_2': [checklist] }
+            currentContractId: null, // ID del contrato actualmente seleccionado
+            managerStats: {}, // Estadísticas calculadas para la vista de gestor
+            currentManagerId: null, // ID del gestor actualmente seleccionado
         };
 
+        // 2. GESTIÓN DE ESTADO (REACTIVIDAD)
+        // -----------------------------------------------------------------
+
+        // Función para actualizar el estado y disparar el re-renderizado
+        function setState(updater) {
+            const newState = typeof updater === 'function' ? updater(state) : updater;
+            state = { ...state, ...newState };
+            console.log("Estado Actualizado:", state);
+            renderApp();
+            saveStateToCloud(state); // ⬅️ CRÍTICO: Dispara el guardado en cada cambio
+        }
+        
+        // 3. COMUNICACIÓN CON GOOGLE APPS SCRIPT (APIs)
+        // -----------------------------------------------------------------
 
         /**
-         * LECTURA: Carga el estado inicial de la aplicación desde Google Sheets.
+         * Lee el estado completo de la nube (función doGet del Apps Script).
+         * @returns {Promise<void>}
          */
         async function fetchStateFromCloud() {
-            console.log("Iniciando carga de datos desde Google Sheets...");
             try {
-                // Petición GET al Apps Script (doGet)
-                const response = await fetch(API_URL); 
-                const data = await response.json();
+                // No usamos 'no-cors' en el GET para poder leer la respuesta JSON
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    cache: 'no-cache',
+                });
                 
-                console.log("Datos cargados de la nube:", data);
-
-                // --- 1. Cargar Actividades DACP ---
-                const dacp = Array.isArray(data.dacpActivities) && data.dacpActivities.length > 0 
-                    ? data.dacpActivities 
-                    : DEFAULT_DACP_ACTIVITIES;
-
-                // --- 2. Cargar Contratos (Checklists) ---
-                const contracts = data.contracts && Object.keys(data.contracts).length > 0 
-                    ? data.contracts 
-                    : loadInitialContracts();
+                if (response.ok) {
+                    const data = await response.json();
                     
-                // --- 3. Establecer Contratos Activos y Manager IDs ---
-                const contractKeys = Object.keys(contracts);
-                const firstContractId = contractKeys[0] || INITIAL_CONTRACT_ID;
-                
-                const currentId = contractKeys.includes(state.currentContractId) 
-                    ? state.currentContractId 
-                    : firstContractId;
-                
-                // Si consolidatedContractId no existe, usa el primer ID disponible
-                const consolidatedId = contractKeys.includes(state.consolidatedContractId) 
-                    ? state.consolidatedContractId
-                    : firstContractId;
+                    const loadedActivities = data.dacpActivities && data.dacpActivities.length > 0
+                        ? data.dacpActivities 
+                        : initialActivities;
+                        
+                    const loadedContracts = data.contracts || {};
 
-                // Actualizar el estado global
-                state.dacpActivities = dacp;
-                state.contracts = contracts;
-                state.currentContractId = currentId;
-                state.consolidatedContractId = consolidatedId; // NUEVO
-                state.activeTab = 'dashboard'; 
+                    let currentContractId = state.currentContractId;
+                    const contractIds = Object.keys(loadedContracts);
+                    if (!currentContractId && contractIds.length > 0) {
+                        currentContractId = contractIds[contractIds.length - 1];
+                    } else if (contractIds.length === 0) {
+                         // Si no hay contratos cargados, creamos uno inicial solo para que el selector funcione
+                         handleCreateNewContract('CONTRATO-INICIAL-001', true); // No guardar en la nube inmediatamente
+                    }
 
+
+                    state = {
+                        ...state,
+                        dacpActivities: loadedActivities,
+                        contracts: loadedContracts,
+                        currentContractId: currentContractId || Object.keys(state.contracts)[0] || null
+                    };
+                    console.log("Datos cargados exitosamente de la nube.");
+                } else {
+                    console.error("🔴 Error al cargar datos:", response.status);
+                    // Lógica de emergencia si la lectura falla (ej. si el doGet es incorrecto o hay un 404)
+                    alert("Error al cargar datos. Verifique el URL del despliegue. Usando datos iniciales de emergencia.");
+                }
             } catch (error) {
-                console.error("Error al cargar datos de la nube. Usando datos iniciales locales de emergencia.", error);
-                // Fallback: usar datos iniciales si la carga falla
-                state.dacpActivities = DEFAULT_DACP_ACTIVITIES;
-                state.contracts = loadInitialContracts();
-                state.consolidatedContractId = INITIAL_CONTRACT_ID;
+                console.error("🔴 Error CRÍTICO de conexión al cargar datos:", error); 
+                // Esto suele ser el error CORS
+                alert("Error de conexión (CORS). Verifique que su Apps Script esté bien desplegado y que la API_URL sea la correcta.");
             }
         }
 
         /**
-         * ESCRITURA: Envía todo el estado de persistencia (Activities y Contracts) a Google Sheets.
+         * Guarda el estado completo en la nube (función doPost del Apps Script).
+         * @param {Object} newState - El estado completo de la aplicación a guardar.
          */
         async function saveStateToCloud(newState) {
-            // Actualiza el estado localmente primero
-            state = { ...state, ...newState };
-
-            const dataToSave = {
-                dacpActivities: state.dacpActivities,
-                contracts: state.contracts,
-            };
-
+            console.log("Intentando guardar datos en la nube...");
             try {
-                // Petición POST al Apps Script (doPost)
-                await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Necesario para el flujo simple de Apps Script
+                    // CRÍTICO PARA CORS: 'no-cors' es esencial para que el POST se envíe desde un dominio externo.
+                    mode: 'no-cors', 
+                    cache: 'no-cache',
                     headers: {
-                        'Content-Type': 'text/plain', // Usar 'text/plain' para el Apps Script simple
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(dataToSave)
+                    body: JSON.stringify(newState)
                 });
-                console.log("✅ Datos enviados para guardar en la nube. Re-renderizando...");
+                
+                // Con 'no-cors', solo se registra el envío exitoso, no la respuesta del servidor.
+                console.log("Guardado exitoso (Respuesta opaca).");
+                
             } catch (error) {
-                console.error("❌ Error al guardar datos en la nube.", error);
-                // NOTA: Con 'no-cors' la respuesta es opaca, este catch solo captura errores de red (ej. URL incorrecta).
-                alert("Advertencia: No se pudieron guardar los cambios en la nube. Revisa la URL o la configuración del Apps Script.");
-            }
-            
-            // Una vez que se intenta guardar, se actualiza la interfaz
-            destroyCharts();
-            renderApp();
-        }
-
-
-        // Función principal de actualización de estado que ahora llama a saveStateToCloud
-        function setState(newState) {
-            // Clonar la data para evitar mutaciones directas y asegurar que saveStateToCloud tenga la última versión.
-            const newDacpActivities = newState.dacpActivities ? JSON.parse(JSON.stringify(newState.dacpActivities)) : state.dacpActivities;
-            const newContracts = newState.contracts ? JSON.parse(JSON.stringify(newState.contracts)) : state.contracts;
-            
-            saveStateToCloud({ 
-                ...newState, 
-                dacpActivities: newDacpActivities,
-                contracts: newContracts 
-            });
-        }
-
-
-        // =================================================================
-        // 3. FUNCIONES DE MANEJO DE EVENTOS (Adaptadas a la nueva persistencia)
-        // =================================================================
-        
-        /**
-         * Retorna el checklist del contrato actualmente seleccionado en la pestaña 'Lista de Chequeo'.
-         */
-        function getCurrentChecklist() {
-            return state.contracts[state.currentContractId] || INITIAL_ACTIVITIES;
-        }
-
-        /**
-         * Retorna el checklist del contrato actualmente seleccionado en la pestaña 'Manager'.
-         */
-        function getManagerChecklist() {
-            return state.contracts[state.consolidatedContractId] || [];
-        }
-
-
-        /**
-         * Actualiza el valor de un campo específico en una actividad DACP.
-         */
-        function actualizarItem(id, campo, valor) {
-            const newData = state.dacpActivities.map(item =>
-                item.id === id ? { ...item, [campo]: valor } : item
-            );
-            setState({ dacpActivities: newData });
-        }
-
-        /**
-         * Manejador para los cambios de campos en la Matriz DACP.
-         */
-        function handleActivityChange(e) {
-            const { name, value } = e.target;
-            const [field, id] = name.split('_');
-            const itemId = parseInt(id);
-
-            if (field === 'cumplimiento') {
-                const fecha = value ? new Date().toISOString().slice(0, 10) : '';
-                const newData = state.dacpActivities.map(item =>
-                    item.id === itemId ? { ...item, cumplimiento: value || null, fechaEvaluacion: fecha } : item
-                );
-                setState({ dacpActivities: newData });
-            } else if (field === 'observaciones') {
-                actualizarItem(itemId, 'observaciones', value);
-            } else if (field === 'filtroTipo') {
-                setState({ filtroTipo: value });
-            } else if (field === 'filtroCumplimiento') {
-                setState({ filtroCumplimiento: value });
+                console.error("🔴 Error CRÍTICO de conexión al guardar:", error);
+                alert("Error al guardar los datos. Verifique su conexión y la URL de la API en el HTML.");
             }
         }
+
+        // 4. MANEJADORES DE EVENTOS
+        // -----------------------------------------------------------------
+
+        /** Cambia la pestaña activa. */
+        function setActiveTab(tab) {
+            setState({ activeTab: tab });
+        }
         
-        /**
-         * Maneja el cambio de radio o textarea en la lista de chequeo de contratos.
-         */
-        function handleChecklistChange(id, campo, valor) {
-            const currentChecklist = getCurrentChecklist();
-            
-            // 1. Clonar y aplicar el cambio al ítem correcto
-            const newChecklist = currentChecklist.map(item => {
-                if (item.id === id) {
-                    const newItem = { ...item };
-                    
-                    // Si es un campo de cumplimiento (checkbox), desmarca los campos opuestos de la misma categoría
-                    if (campo.includes('Cumple') || campo.includes('No Cumple') || campo.includes('No Aplica')) {
-                        const keysToClear = [
-                            "SECOP II - Cumple", "SECOP II - No Cumple", 
-                            "CARPETA FISICA - Cumple", "CARPETA FISICA - No Cumple", "CARPETA FISICA - No Aplica/ Parcialmente"
-                        ].filter(key => key.includes(campo.split(' - ')[0]) && key !== campo); // Borra los hermanos de la misma columna
-                        
-                        // Si el checkbox se está *activando*
-                        if (valor === 'X') {
-                            keysToClear.forEach(key => newItem[key] = ""); // Borra los hermanos
-                            newItem[campo] = 'X'; // Activa el propio campo
-                        } else {
-                             // Si el checkbox se está *desactivando*
-                            newItem[campo] = '';
-                        }
-                    } else {
-                        // Si es un textarea (evidencia, obs_fisica, obs_secop)
-                        newItem[campo] = valor;
+        /** Maneja el cambio en las actividades DACP (tabla principal). */
+        function handleActivityChange(id, field, value) {
+            setState(prevState => {
+                const newActivities = prevState.dacpActivities.map(activity => {
+                    if (activity.id === id) {
+                        return { ...activity, [field]: value };
                     }
-                    return newItem;
-                }
-                return item;
+                    return activity;
+                });
+                return { dacpActivities: newActivities };
             });
-
-            // 2. Crear el nuevo objeto de contratos actualizado
-            const newContracts = {
-                ...state.contracts,
-                [state.currentContractId]: newChecklist
-            };
-
-            // 3. Llamar a setState para guardar en la nube y re-renderizar
-            setState({ contracts: newContracts });
+        }
+        
+        /** Maneja el cambio en la Lista de Chequeo (contratos). */
+        function handleChecklistChange(contractId, itemId, field, value) {
+            setState(prevState => {
+                const newContracts = { ...prevState.contracts };
+                
+                if (newContracts[contractId]) {
+                    newContracts[contractId] = newContracts[contractId].map(item => {
+                        if (item.id === itemId) {
+                            return { ...item, [field]: value };
+                        }
+                        return item;
+                    });
+                }
+                
+                return { contracts: newContracts };
+            });
         }
 
-        /**
-         * Crea un nuevo contrato en el estado y lo activa.
-         */
-        function handleCreateNewContract() {
-            const newId = prompt("Ingrese el ID del nuevo contrato:");
-            if (newId && newId.trim() !== "" && !state.contracts[newId]) {
-                // IMPORTANTE: Asegurar que se clona la lista de 31 ítems
-                const newContracts = {
-                    ...state.contracts,
-                    [newId]: JSON.parse(JSON.stringify(INITIAL_ACTIVITIES)) // Clonar la plantilla de 31
-                };
-                setState({ contracts: newContracts, currentContractId: newId, consolidatedContractId: newId });
-                alert(`Contrato ${newId} creado y activado.`);
-            } else if (newId) {
-                alert("El ID del contrato es inválido o ya existe.");
-            }
-        }
-
-        /**
-         * Maneja el cambio de selección del contrato activo en la pestaña de 'Lista de Chequeo'.
-         */
-        function handleContractSelectChange(e) {
-            const newId = e.target.value;
-            if (newId) {
-                setState({ currentContractId: newId });
-            }
-        }
-
-        /**
-         * NUEVO: Maneja el cambio de selección del contrato activo en la pestaña de 'Manager'.
-         */
-        function handleManagerSelectChange(e) {
-            const newId = e.target.value;
-            if (newId) {
-                setState({ consolidatedContractId: newId });
-            }
-        }
-
-        /**
-         * Destruye todas las instancias de Chart.js para evitar errores al re-renderizar.
-         */
-        function destroyCharts() {
-            if (state.charts.pieChart) state.charts.pieChart.destroy();
-            if (state.charts.barChart) state.charts.barChart.destroy();
-            if (state.charts.radarChart) state.charts.radarChart.destroy();
-            if (state.charts.stageChart) state.charts.stageChart.destroy();
-            if (state.charts.managerRadarChart) state.charts.managerRadarChart.destroy(); // NUEVO
-            if (state.charts.managerPieChart) state.charts.managerPieChart.destroy(); // NUEVO
-        }
-
-        // =================================================================
-        // 4. FUNCIONES DE EXPORTACIÓN Y FILTRADO (Se mantienen igual)
-        // =================================================================
-
-        function exportToExcel(data, filename) {
-            const csvRows = [];
-            const headers = ["ID", "Tipo", "Proceso", "Funcion", "Actividad", "Frecuencia", "Importancia", "Cumplimiento", "Observaciones", "Fecha Evaluacion", "Informe", "Reporta A"];
-            csvRows.push(headers.join(';'));
-            for (const item of data) {
-                const values = [
-                    item.id,
-                    item.tipo,
-                    `"${String(item.proceso).replace(/"/g, '""')}"`,
-                    `"${String(item.funcion).replace(/"/g, '""')}"`,
-                    `"${String(item.actividad).replace(/"/g, '""')}"`,
-                    `"${String(item.frecuencia).replace(/"/g, '""')}"`,
-                    item.importancia,
-                    item.cumplimiento || 'Pendiente',
-                    `"${String(item.observaciones).replace(/"/g, '""')}"`,
-                    item.fechaEvaluacion,
-                    `"${String(item.informe).replace(/"/g, '""')}"`,
-                    `"${String(item.reportaA).replace(/"/g, '""')}"`
-                ];
-                csvRows.push(values.join(';'));
-            }
-            const csvString = csvRows.join('\n');
-            const blob = new Blob(["\uFEFF", csvString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-
-        function exportChecklistToExcel(contractId, data) {
-            if (!data || data.length === 0) {
-                alert("No hay datos para exportar.");
+        /** Crea un nuevo registro de contrato (lista de chequeo). */
+        function handleCreateNewContract(optionalId, skipSave = false) {
+            const newId = optionalId || prompt("Ingrese el ID del nuevo contrato (ej: 4125.010.26.1.001-2025):");
+            if (!newId || state.contracts[newId]) {
+                if (newId) alert("Ese ID de contrato ya existe o no es válido.");
                 return;
             }
-            const csvRows = [];
-            const headersRow1 = [ 
-                "N°", "Etapa / Criterio", "Aspecto a Verificar", 
-                "SECOP II", "", 
-                "CARPETA FISICA", "", "", 
-                "Evidencia", "Observaciones Carpeta Fisica", "Observaciones SECOP II" 
-            ];
-            const headersRow2 = [ 
-                "", "", "", 
-                "Cumple", "No Cumple", 
-                "Cumple", "No Cumple", "No Aplica/ Parcialmente",
-                "", "", ""
-            ];
-            
-            // Unir encabezados
-            csvRows.push(headersRow1.join(';'));
-            csvRows.push(headersRow2.join(';'));
-            
-            // Datos
-            for (const item of data) {
-                const values = [
-                    item.id,
-                    `"${String(item.etapa).replace(/"/g, '""')}"`,
-                    `"${String(item.aspecto).replace(/"/g, '""')}"`,
-                    item["SECOP II - Cumple"] === 'X' ? 'X' : '',
-                    item["SECOP II - No Cumple"] === 'X' ? 'X' : '',
-                    item["CARPETA FISICA - Cumple"] === 'X' ? 'X' : '',
-                    item["CARPETA FISICA - No Cumple"] === 'X' ? 'X' : '',
-                    item["CARPETA FISICA - No Aplica/ Parcialmente"] === 'X' ? 'X' : '',
-                    `"${String(item.evidencia).replace(/"/g, '""')}"`,
-                    `"${String(item.obs_fisica).replace(/"/g, '""')}"`,
-                    `"${String(item.obs_secop).replace(/"/g, '""')}"`
-                ];
-                csvRows.push(values.join(';'));
-            }
 
-            const csvString = csvRows.join('\n');
-            const filename = `Checklist_Contrato_${contractId || 'SinID'}.csv`;
-            const blob = new Blob(["\uFEFF", csvString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-
-        /**
-         * NUEVA FUNCION: Exporta el resumen estadístico de un contrato para el Manager.
-         */
-        function exportManagerStatsToExcel(contractId, stats) {
-            const csvData = [];
-            // Encabezados
-            csvData.push(["Métrica", "Valor"]);
-            
-            // Métricas principales
-            csvData.push(["ID Contrato", contractId]);
-            csvData.push(["Total Ítems (31)", stats.total]);
-            csvData.push(["SECOP Cumple", stats.cumplidasSECOP]);
-            csvData.push(["FÍSICA Cumple", stats.cumplidasFISICA]);
-            csvData.push(["No Aplica/Parcial", stats.noAplicaParcial]);
-            csvData.push(["Pendiente Evaluar", stats.pendienteNoEvaluado]);
-            csvData.push(["Cumplimiento Total (%)", stats.pctCumplimientoTotal.toFixed(1) + "%"]);
-
-            // Separador para detalle por etapa
-            csvData.push([]);
-            csvData.push(["DETALLE POR ETAPA", "Cumplimiento (%)"]);
-            
-            // Detalle por etapa
-            Object.keys(stats.porEtapa).forEach(etapa => {
-                csvData.push([
-                    etapa, 
-                    stats.porEtapa[etapa].pctCumplimiento.toFixed(1) + "%"
-                ]);
-            });
-
-            // Convertir a CSV String
-            const csvRows = csvData.map(row => row.join(';'));
-            const csvString = csvRows.join('\n');
-            const filename = `Resumen_Contrato_${contractId || 'SinID'}_Manager.csv`;
-            const blob = new Blob(["\uFEFF", csvString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-
-        function getActividadesFiltradas() {
-            return state.dacpActivities.filter(act => {
-                const matchTipo = state.filtroTipo === 'Todos' || act.tipo === state.filtroTipo;
-                const matchCumplimiento = state.filtroCumplimiento === 'Todos' || 
-                                          (state.filtroCumplimiento === 'Pendiente' && (act.cumplimiento === null || act.cumplimiento === '')) || 
-                                          act.cumplimiento === state.filtroCumplimiento;
-                return matchTipo && matchCumplimiento;
-            });
-        }
-
-        // =================================================================
-        // 5. CÁLCULO DE ESTADÍSTICAS Y RENDERING
-        // =================================================================
-
-        function calcularEstadisticas(data, complianceField = 'cumplimiento') {
-            const evaluadas = data.filter(a => a[complianceField] !== null && a[complianceField] !== '');
-            const cumple = evaluadas.filter(a => a[complianceField] === 'Cumple').length;
-            const noCumple = evaluadas.filter(a => a[complianceField] === 'No Cumple').length;
-            const parcial = evaluadas.filter(a => a[complianceField] === 'Parcial').length;
-            const pendiente = data.length - evaluadas.length;
-
-            return {
-                total: data.length,
-                evaluadas: evaluadas.length,
-                pendiente: pendiente,
-                cumple: cumple,
-                noCumple: noCumple,
-                parcial: parcial,
-                pctCumple: evaluadas.length > 0 ? (cumple / evaluadas.length) * 100 : 0
-            };
-        }
-
-        /**
-         * Calcula estadísticas para la Lista de Chequeo de Contratación (31 ítems).
-         */
-        function calculateChecklistStats(checklist) {
-            const stats = {
-                total: checklist.length,
-                cumplidasSECOP: 0,
-                noCumplidasSECOP: 0,
-                cumplidasFISICA: 0,
-                noCumplidasFISICA: 0,
-                noAplicaParcial: 0,
-                pendienteNoEvaluado: 0,
-                porEtapa: {}
+            // Crear el nuevo estado
+            const newContracts = {
+                ...state.contracts,
+                [newId]: JSON.parse(JSON.stringify(initialChecklistTemplate)) // Copia profunda
             };
 
-            const etapas = Array.from(new Set(checklist.map(item => item.etapa)));
-
-            // 1. Inicializar y calcular totales globales
-            checklist.forEach(item => {
-                const secopCumple = item["SECOP II - Cumple"] === 'X';
-                const fisicaCumple = item["CARPETA FISICA - Cumple"] === 'X';
-                // Se considera "no evaluado" si NO hay NINGÚN checkbox marcado en NINGUNA de las 5 columnas
-                const noEvaluada = !secopCumple && item["SECOP II - No Cumple"] !== 'X' && 
-                                   !fisicaCumple && item["CARPETA FISICA - No Cumple"] !== 'X' && item["CARPETA FISICA - No Aplica/ Parcialmente"] !== 'X';
-
-                if (secopCumple) stats.cumplidasSECOP++;
-                if (item["SECOP II - No Cumple"] === 'X') stats.noCumplidasSECOP++;
-                
-                if (fisicaCumple) stats.cumplidasFISICA++;
-                if (item["CARPETA FISICA - No Cumple"] === 'X') stats.noCumplidasFISICA++;
-                if (item["CARPETA FISICA - No Aplica/ Parcialmente"] === 'X') stats.noAplicaParcial++;
-                
-                if (noEvaluada) stats.pendienteNoEvaluado++;
+            // Si se llama al crear un contrato inicial vacío al cargar, no usamos setState para evitar un POST vacío
+            if (skipSave) {
+                 state.contracts = newContracts;
+                 state.currentContractId = newId;
+                 return; // Salir sin guardar
+            }
+            
+            setState({
+                contracts: newContracts,
+                currentContractId: newId
             });
-            
-            // CÁLCULO DE CUMPLIMIENTO TOTAL
-            // Contamos los cumplimientos totales (SECOP Cumple + FÍSICA Cumple)
-            const cumplimientosTotales = stats.cumplidasSECOP + stats.cumplidasFISICA;
-            // El total de posibles ítems de cumplimiento a evaluar es: Total de ítems * 2 (SECOP y FISICA)
-            // Se asume que, idealmente, todos deberían ser "Cumple" en ambas categorías.
-            const totalItemsPotenciales = stats.total * 2; 
-
-            stats.pctCumplimientoTotal = totalItemsPotenciales > 0 
-                ? (cumplimientosTotales / totalItemsPotenciales) * 100 
-                : 0;
-
-            // 2. Calcular estadísticas por etapa (para el Radar Chart)
-            etapas.forEach(etapa => {
-                const itemsEtapa = checklist.filter(item => item.etapa === etapa);
-                const totalEtapa = itemsEtapa.length;
-                let secopCumple = 0;
-                let fisicaCumple = 0;
-                
-                itemsEtapa.forEach(item => {
-                    if (item["SECOP II - Cumple"] === 'X') secopCumple++;
-                    if (item["CARPETA FISICA - Cumple"] === 'X') fisicaCumple++;
-                });
-
-                const cumplidasTotalEtapa = secopCumple + fisicaCumple;
-
-                // Porcentaje de cumplimiento basado en las 2 verificaciones por ítem (SECOP y FÍSICA)
-                const totalPotencialEtapa = totalEtapa * 2; 
-
-                stats.porEtapa[etapa] = {
-                    total: totalEtapa,
-                    pctCumplimiento: totalPotencialEtapa > 0 ? (cumplidasTotalEtapa / totalPotencialEtapa) * 100 : 0
-                };
-            });
-
-            return stats;
-        }
-
-        function renderDashboardCharts(actStats) {
-            
-            // Gráfico de Pastel (Cumplimiento General)
-            const pieCtx = document.getElementById('compliancePieChart')?.getContext('2d');
-            if (pieCtx) {
-                state.charts.pieChart = new Chart(pieCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: ['✓ Cumple', '✗ No Cumple', '◐ Parcialmente', 'Pendiente'],
-                        datasets: [{
-                            data: [actStats.cumple, actStats.noCumple, actStats.parcial, actStats.pendiente],
-                            backgroundColor: ['rgb(34, 197, 94)', 'rgb(239, 68, 68)', 'rgb(245, 158, 11)', 'rgb(107, 114, 128)'],
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Gráfico de Barras (Cumplimiento por Tipo de Actividad)
-            const barCtx = document.getElementById('typeBarChart')?.getContext('2d');
-            if (barCtx) {
-                const interna = state.dacpActivities.filter(a => a.tipo === 'Interna');
-                const externa = state.dacpActivities.filter(a => a.tipo === 'Externa');
-                const statsInterna = calcularEstadisticas(interna);
-                const statsExterna = calcularEstadisticas(externa);
-
-                state.charts.barChart = new Chart(barCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Interna', 'Externa'],
-                        datasets: [
-                            {
-                                label: 'Cumple',
-                                data: [statsInterna.cumple, statsExterna.cumple],
-                                backgroundColor: 'rgb(34, 197, 94)',
-                            },
-                            {
-                                label: 'No Cumple',
-                                data: [statsInterna.noCumple, statsExterna.noCumple],
-                                backgroundColor: 'rgb(239, 68, 68)',
-                            },
-                            {
-                                label: 'Parcial',
-                                data: [statsInterna.parcial, statsExterna.parcial],
-                                backgroundColor: 'rgb(245, 158, 11)',
-                            },
-                            {
-                                label: 'Pendiente',
-                                data: [statsInterna.pendiente, statsExterna.pendiente],
-                                backgroundColor: 'rgb(107, 114, 128)',
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true }
-                        },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function renderChecklistStageRadar(checklist) {
-            
-            const stats = calculateChecklistStats(checklist);
-            const etapas = Array.from(new Set(checklist.map(item => item.etapa)));
-            const scores = etapas.map(e => stats.porEtapa[e].pctCumplimiento);
-
-            const ctx = document.getElementById('checklistRadarChart')?.getContext('2d');
-            if (ctx) {
-                state.charts.stageChart = new Chart(ctx, {
-                    type: 'radar',
-                    data: {
-                        labels: etapas,
-                        datasets: [{
-                            label: '% Cumplimiento (SECOP + Carpeta Física)',
-                            data: scores,
-                            backgroundColor: 'rgba(16, 185, 129, 0.2)', // emerald-500
-                            borderColor: 'rgba(16, 185, 129, 1)',
-                            pointBackgroundColor: 'rgba(16, 185, 129, 1)',
-                            pointBorderColor: '#fff',
-                            borderWidth: 1,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            r: {
-                                suggestedMin: 0,
-                                suggestedMax: 100,
-                                pointLabels: {
-                                    font: { size: 10 }
-                                },
-                                ticks: { display: false }
-                            }
-                        },
-                        plugins: {
-                            legend: { display: true, position: 'bottom' }
-                        }
-                    }
-                });
-            }
-        }
-
-        // NUEVA FUNCIÓN: Renderiza el gráfico de Radar para el Manager
-        function renderManagerRadarChart(stats) {
-            
-            const etapas = Object.keys(stats.porEtapa);
-            const scores = etapas.map(e => stats.porEtapa[e].pctCumplimiento);
-
-            const ctx = document.getElementById('managerRadarChart')?.getContext('2d');
-            if (ctx) {
-                state.charts.managerRadarChart = new Chart(ctx, {
-                    type: 'radar',
-                    data: {
-                        labels: etapas,
-                        datasets: [{
-                            label: '% Cumplimiento por Etapa',
-                            data: scores,
-                            backgroundColor: 'rgba(251, 191, 36, 0.4)', // amber-400
-                            borderColor: 'rgb(251, 191, 36)',
-                            pointBackgroundColor: 'rgb(251, 191, 36)',
-                            pointBorderColor: '#fff',
-                            borderWidth: 1,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            r: {
-                                suggestedMin: 0,
-                                suggestedMax: 100,
-                                pointLabels: {
-                                    font: { size: 12 }
-                                },
-                                ticks: { 
-                                    display: true, 
-                                    stepSize: 25, 
-                                    backdropColor: 'rgba(0, 0, 0, 0)' // Fondo transparente para los ticks
-                                } 
-                            }
-                        },
-                        plugins: {
-                            legend: { display: true, position: 'bottom' }
-                        }
-                    }
-                });
-            }
-        }
-
-        // NUEVA FUNCIÓN: Renderiza el gráfico de Pastel/Donut para el Manager
-        function renderManagerPieChart(stats) {
-            
-            // Cumplidas = SECOP Cumple + FÍSICA Cumple
-            const cumplidas = stats.cumplidasSECOP + stats.cumplidasFISICA; 
-            // No Cumplidas = SECOP No Cumple + FÍSICA No Cumple
-            const noCumplidas = stats.noCumplidasSECOP + stats.noCumplidasFISICA;
-            const noAplicaParcial = stats.noAplicaParcial;
-            const pendienteNoEvaluado = stats.pendienteNoEvaluado;
-
-            const ctx = document.getElementById('managerPieChart')?.getContext('2d');
-            if (ctx) {
-                state.charts.managerPieChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['✓ Cumple', '✗ No Cumple', '◐ N/A o Parcial', 'Pendiente Evaluar'],
-                        datasets: [{
-                            data: [cumplidas, noCumplidas, noAplicaParcial, pendienteNoEvaluado > 0 ? pendienteNoEvaluado : 0],
-                            backgroundColor: ['rgb(34, 197, 94)', 'rgb(239, 68, 68)', 'rgb(251, 191, 36)', 'rgb(107, 114, 128)'],
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            },
-                            title: {
-                                display: true,
-                                text: `Cumplimiento Total (${stats.pctCumplimientoTotal.toFixed(1)}%)`,
-                                font: {
-                                    size: 16
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-
-        // --- Componentes de UI (Cards) ---
-
-        function renderStatsCard(stats) {
-            return `
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    ${renderStatItem('Total Actividades', stats.total, 'bg-blue-100 text-blue-800')}
-                    ${renderStatItem('Evaluadas', stats.evaluadas, 'bg-indigo-100 text-indigo-800')}
-                    ${renderStatItem('Pendientes', stats.pendiente, 'bg-gray-100 text-gray-800')}
-                    ${renderStatItem('Cumplimiento (%)', stats.evaluadas > 0 ? (stats.cumple / stats.evaluadas * 100).toFixed(1) : 0, 'bg-green-100 text-green-800')}
-                </div>
-            `;
-        }
-
-        function renderStatItem(title, value, colorClass) {
-            return `
-                <div class="p-4 bg-white rounded-lg shadow-md border border-gray-200">
-                    <p class="text-sm font-medium text-gray-500">${title}</p>
-                    <p class="text-2xl font-bold ${colorClass}">${value}</p>
-                </div>
-            `;
-        }
-
-        // --- Funciones de Renderización de Pestañas ---
-
-        function renderDACPActivities(stats) {
-            const filteredActivities = getActividadesFiltradas();
-            const activitiesHtml = filteredActivities.map(act => {
-                const bgColor = act.cumplimiento === 'Cumple' ? 'bg-green-50' : 
-                                act.cumplimiento === 'No Cumple' ? 'bg-red-50' : 
-                                act.cumplimiento === 'Parcial' ? 'bg-amber-50' : 
-                                'bg-white';
-                
-                return `
-                    <tr class="hover:bg-gray-50 ${bgColor}">
-                        <td class="p-3 whitespace-nowrap text-sm font-medium text-gray-900">${act.id}</td>
-                        <td class="p-3 whitespace-nowrap text-xs text-gray-500">${act.tipo}</td>
-                        <td class="p-3 text-sm text-gray-500">${act.proceso}</td>
-                        <td class="p-3 text-sm text-gray-700 font-medium">${act.actividad}</td>
-                        <td class="p-3 whitespace-nowrap text-center text-sm font-semibold text-indigo-600">${act.importancia}</td>
-                        <td class="p-3 whitespace-nowrap w-32">
-                            <select name="cumplimiento_${act.id}" onchange="handleActivityChange(event)" class="p-1 border rounded-md text-xs w-full ${act.cumplimiento === 'Cumple' ? 'bg-green-100 border-green-400' : act.cumplimiento === 'No Cumple' ? 'bg-red-100 border-red-400' : act.cumplimiento === 'Parcial' ? 'bg-amber-100 border-amber-400' : 'bg-white border-gray-300'}">
-                                <option value="">Pendiente</option>
-                                <option value="Cumple" ${act.cumplimiento === 'Cumple' ? 'selected' : ''}>Cumple</option>
-                                <option value="No Cumple" ${act.cumplimiento === 'No Cumple' ? 'selected' : ''}>No Cumple</option>
-                                <option value="Parcial" ${act.cumplimiento === 'Parcial' ? 'selected' : ''}>Parcial</option>
-                            </select>
-                        </td>
-                        <td class="p-3 text-sm text-gray-500">${act.fechaEvaluacion || 'N/A'}</td>
-                        <td class="p-3">
-                            <textarea 
-                                name="observaciones_${act.id}" 
-                                onchange="handleActivityChange(event)" 
-                                rows="2" 
-                                class="table-textarea text-gray-700" 
-                                placeholder="Escriba aquí las observaciones..."
-                            >${act.observaciones}</textarea>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            return `
-                <div class="mt-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Matriz de Actividades DACP</h2>
-                    
-                    ${renderStatsCard(stats)}
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Distribución General de Cumplimiento</h3>
-                            <div style="height: 300px;">
-                                <canvas id="compliancePieChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Cumplimiento por Tipo de Actividad</h3>
-                            <div style="height: 250px;">
-                                <canvas id="typeBarChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap items-center space-x-4 mb-6 p-4 bg-white rounded-lg shadow">
-                        <div class="flex items-center space-x-2">
-                            <label for="filtroTipo" class="text-sm font-medium text-gray-700">Filtrar por Tipo:</label>
-                            <select id="filtroTipo" name="filtroTipo" onchange="handleActivityChange(event)" class="p-2 border rounded-lg text-sm">
-                                <option value="Todos" ${state.filtroTipo === 'Todos' ? 'selected' : ''}>Todos</option>
-                                <option value="Interna" ${state.filtroTipo === 'Interna' ? 'selected' : ''}>Interna</option>
-                                <option value="Externa" ${state.filtroTipo === 'Externa' ? 'selected' : ''}>Externa</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <label for="filtroCumplimiento" class="text-sm font-medium text-gray-700">Filtrar por Cumplimiento:</label>
-                            <select id="filtroCumplimiento" name="filtroCumplimiento" onchange="handleActivityChange(event)" class="p-2 border rounded-lg text-sm">
-                                <option value="Todos" ${state.filtroCumplimiento === 'Todos' ? 'selected' : ''}>Todos</option>
-                                <option value="Cumple" ${state.filtroCumplimiento === 'Cumple' ? 'selected' : ''}>Cumple</option>
-                                <option value="No Cumple" ${state.filtroCumplimiento === 'No Cumple' ? 'selected' : ''}>No Cumple</option>
-                                <option value="Parcial" ${state.filtroCumplimiento === 'Parcial' ? 'selected' : ''}>Parcial</option>
-                                <option value="Pendiente" ${state.filtroCumplimiento === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                            </select>
-                        </div>
-                        <button onclick="exportToExcel(getActividadesFiltradas(), 'Matriz_DACP_Auditoria.csv')" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 text-sm">
-                            Exportar a Excel
-                        </button>
-                    </div>
-
-                    <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Proceso</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Actividad</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Imp.</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase w-32">Cumplimiento</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">F. Evaluación</th>
-                                    <th scope="col" class="p-3 text-left text-xs font-semibold text-gray-600 uppercase w-64">Observaciones</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${activitiesHtml}
-                            </tbody>
-                        </table>
-                        ${filteredActivities.length === 0 ? '<p class="text-center p-4 text-gray-500">No hay actividades que coincidan con los filtros.</p>' : ''}
-                    </div>
-                </div>
-            `;
         }
         
-        function renderContractChecklist(stats) {
-            const contractIds = Object.keys(state.contracts);
-            const checklist = getCurrentChecklist();
+        /** Cambia el contrato seleccionado en la vista de Checklist. */
+        function handleContractSelectChange(newId) {
+            setState({ currentContractId: newId });
+        }
+        
+        /** Cambia el gestor seleccionado en la vista de Manager. */
+        function handleManagerSelectChange(newId) {
+            setState({ currentManagerId: newId });
+        }
+        
+        // 5. LÓGICA DE DATOS Y AYUDANTES
+        // -----------------------------------------------------------------
 
-            const checklistHtml = checklist.map(item => {
-                const etapa = item.etapa;
-                const isEtapaHeader = item.id === checklist.find(i => i.etapa === etapa)?.id; // Solo el primer ítem de cada etapa
+        // Esta función necesita los 16 ítems de actividad para el cálculo
+        function calculateDACPStats(activities) {
+            const total = activities.length;
+            const cumplidos = activities.filter(a => a.cumplimiento === 'Cumple').length;
+            const noCumplidos = activities.filter(a => a.cumplimiento === 'No Cumple').length;
+            const noEvaluados = total - cumplidos - noCumplidos;
 
-                return `
-                    <tr class="hover:bg-gray-50 ${isEtapaHeader ? 'border-t-4 border-blue-200' : ''}">
-                        ${isEtapaHeader ? `<td rowspan="${checklist.filter(i => i.etapa === etapa).length}" class="p-3 text-center text-sm font-semibold text-blue-700 align-top bg-blue-50">${etapa}</td>` : ''}
-                        
-                        <td class="p-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.id}</td>
-                        <td class="p-3 text-sm text-gray-700">${item.aspecto}</td>
-                        
-                        <td class="p-3 text-center">
-                            <input type="checkbox" name="secop_cumple_${item.id}" 
-                                   onchange="handleChecklistChange(${item.id}, 'SECOP II - Cumple', this.checked ? 'X' : '')"
-                                   ${item["SECOP II - Cumple"] === 'X' ? 'checked' : ''} 
-                                   class="form-checkbox h-5 w-5 text-green-600 rounded">
-                        </td>
-                        <td class="p-3 text-center">
-                            <input type="checkbox" name="secop_no_cumple_${item.id}"
-                                   onchange="handleChecklistChange(${item.id}, 'SECOP II - No Cumple', this.checked ? 'X' : '')"
-                                   ${item["SECOP II - No Cumple"] === 'X' ? 'checked' : ''} 
-                                   class="form-checkbox h-5 w-5 text-red-600 rounded">
-                        </td>
-
-                        <td class="p-3 text-center">
-                            <input type="checkbox" name="fisica_cumple_${item.id}" 
-                                   onchange="handleChecklistChange(${item.id}, 'CARPETA FISICA - Cumple', this.checked ? 'X' : '')"
-                                   ${item["CARPETA FISICA - Cumple"] === 'X' ? 'checked' : ''} 
-                                   class="form-checkbox h-5 w-5 text-green-600 rounded">
-                        </td>
-                        <td class="p-3 text-center">
-                            <input type="checkbox" name="fisica_no_cumple_${item.id}" 
-                                   onchange="handleChecklistChange(${item.id}, 'CARPETA FISICA - No Cumple', this.checked ? 'X' : '')"
-                                   ${item["CARPETA FISICA - No Cumple"] === 'X' ? 'checked' : ''} 
-                                   class="form-checkbox h-5 w-5 text-red-600 rounded">
-                        </td>
-                        <td class="p-3 text-center">
-                            <input type="checkbox" name="fisica_no_aplica_${item.id}" 
-                                   onchange="handleChecklistChange(${item.id}, 'CARPETA FISICA - No Aplica/ Parcialmente', this.checked ? 'X' : '')"
-                                   ${item["CARPETA FISICA - No Aplica/ Parcialmente"] === 'X' ? 'checked' : ''} 
-                                   class="form-checkbox h-5 w-5 text-amber-600 rounded">
-                        </td>
-                        
-                        <td class="p-3 w-48">
-                            <textarea 
-                                onchange="handleChecklistChange(${item.id}, 'evidencia', this.value)" 
-                                rows="1" 
-                                class="table-textarea text-xs" 
-                                placeholder="Evidencia (Ej. Link/Doc)"
-                            >${item.evidencia}</textarea>
-                        </td>
-
-                        <td class="p-3 w-48">
-                            <textarea 
-                                onchange="handleChecklistChange(${item.id}, 'obs_fisica', this.value)" 
-                                rows="1" 
-                                class="table-textarea text-xs" 
-                                placeholder="Obs. Carpeta Física"
-                            >${item.obs_fisica}</textarea>
-                        </td>
-
-                        <td class="p-3 w-48">
-                            <textarea 
-                                onchange="handleChecklistChange(${item.id}, 'obs_secop', this.value)" 
-                                rows="1" 
-                                class="table-textarea text-xs" 
-                                placeholder="Obs. SECOP II"
-                            >${item.obs_secop}</textarea>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            return `
-                <div class="mt-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Lista de Chequeo de Contratación</h2>
-                    
-                    <div class="flex flex-wrap items-center space-x-4 mb-6 p-4 bg-white rounded-lg shadow">
-                        <div class="flex items-center space-x-2">
-                            <label for="contract-select" class="text-sm font-medium text-gray-700">Contrato Activo:</label>
-                            <select id="contract-select" onchange="handleContractSelectChange(event)" class="p-2 border rounded-lg text-sm font-bold">
-                                ${contractIds.map(id => 
-                                    `<option value="${id}" ${state.currentContractId === id ? 'selected' : ''}>${id}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <button onclick="handleCreateNewContract()" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-150 text-sm">
-                            + Nuevo Contrato
-                        </button>
-                        <button onclick="exportChecklistToExcel(state.currentContractId, getCurrentChecklist())" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 text-sm">
-                            Exportar Checklist a Excel
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        ${renderStatItem('Total Ítems', stats.total, 'bg-blue-100 text-blue-800')}
-                        ${renderStatItem('SECOP Cumple', stats.cumplidasSECOP, 'bg-green-100 text-green-800')}
-                        ${renderStatItem('FÍSICA Cumple', stats.cumplidasFISICA, 'bg-green-100 text-green-800')}
-                        ${renderStatItem('Cumplimiento Global', `${stats.pctCumplimientoTotal.toFixed(1)}%`, 'bg-indigo-100 text-indigo-800')}
-                    </div>
-                    
-                    <div class="bg-white p-6 rounded-lg shadow-lg mb-6 max-w-xl mx-auto">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">Cumplimiento por Etapa del Contrato</h3>
-                        <div style="height: 350px;">
-                            <canvas id="checklistRadarChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200 text-xs">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th rowspan="2" scope="col" class="p-3 text-left font-semibold text-gray-600 uppercase border-b-2">Etapa / Criterio</th>
-                                    <th rowspan="2" scope="col" class="p-3 text-left font-semibold text-gray-600 uppercase border-b-2">N°</th>
-                                    <th rowspan="2" scope="col" class="p-3 text-left font-semibold text-gray-600 uppercase border-b-2 w-48">Aspecto a Verificar</th>
-                                    <th colspan="2" scope="colgroup" class="p-3 text-center font-semibold text-gray-600 uppercase border-b-2 bg-blue-100">SECOP II</th>
-                                    <th colspan="3" scope="colgroup" class="p-3 text-center font-semibold text-gray-600 uppercase border-b-2 bg-green-100">CARPETA FÍSICA</th>
-                                    <th rowspan="2" scope="col" class="p-3 text-left font-semibold text-gray-600 uppercase border-b-2 w-48">Evidencia</th>
-                                    <th rowspan="2" scope="col" class="p-3 text-left font-semibold text-gray-600 uppercase border-b-2 w-48">Obs. Carpeta Física</th>
-                                    <th rowspan="2" scope="col" class="p-3 text-left font-semibold text-gray-600 uppercase border-b-2 w-48">Obs. SECOP II</th>
-                                </tr>
-                                <tr>
-                                    <th scope="col" class="p-3 text-center font-semibold text-green-700 uppercase bg-blue-100">Cumple</th>
-                                    <th scope="col" class="p-3 text-center font-semibold text-red-700 uppercase bg-blue-100">No Cumple</th>
-                                    <th scope="col" class="p-3 text-center font-semibold text-green-700 uppercase bg-green-100">Cumple</th>
-                                    <th scope="col" class="p-3 text-center font-semibold text-red-700 uppercase bg-green-100">No Cumple</th>
-                                    <th scope="col" class="p-3 text-center font-semibold text-amber-700 uppercase bg-green-100">N/A o Parcial</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${checklistHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
+            return { total, cumplidos, noCumplidos, noEvaluados };
+        }
+        
+        /** Obtiene la lista de chequeo del contrato actualmente seleccionado. */
+        function getCurrentChecklist() {
+            return state.contracts[state.currentContractId] || [];
         }
 
-        function renderConsolidatedManager(stats) {
-            const contractIds = Object.keys(state.contracts);
-            const selectedContract = state.consolidatedContractId;
+        // 6. RENDERIZADO (ACTUALIZACIÓN DEL DOM)
+        // -----------------------------------------------------------------
 
-            if (!selectedContract) {
-                return `<p class="text-center text-xl text-gray-500 mt-20">No hay contratos disponibles para consolidar.</p>`;
-            }
+        let complianceChartInstance = null;
+        let importanceChartInstance = null;
+
+        function renderComplianceChart(activities) {
+            const stats = calculateDACPStats(activities);
+            const ctx = document.getElementById('complianceChart').getContext('2d');
             
-            return `
-                <div class="mt-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Módulo Manager: Consolidación por Contrato</h2>
-                    <p class="text-gray-600 mb-6">Seleccione un contrato para ver su resumen estadístico de cumplimiento.</p>
-
-                    <div class="flex flex-wrap items-center space-x-4 mb-6 p-4 bg-white rounded-lg shadow">
-                        <div class="flex items-center space-x-2">
-                            <label for="manager-select" class="text-sm font-medium text-gray-700">Contrato Seleccionado:</label>
-                            <select id="manager-select" onchange="handleManagerSelectChange(event)" class="p-2 border rounded-lg text-sm font-bold text-blue-700">
-                                ${contractIds.map(id => 
-                                    `<option value="${id}" ${selectedContract === id ? 'selected' : ''}>${id}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <button onclick="exportManagerStatsToExcel(state.consolidatedContractId, calculateChecklistStats(getManagerChecklist()))" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 text-sm">
-                            Exportar Resumen
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                        ${renderStatItem('ID Contrato', selectedContract, 'bg-blue-100 text-blue-800 col-span-1')}
-                        ${renderStatItem('Cumplimiento Total', `${stats.pctCumplimientoTotal.toFixed(1)}%`, 'bg-green-100 text-green-800 col-span-2')}
-                        ${renderStatItem('Ítems Pendientes', stats.pendienteNoEvaluado, 'bg-gray-100 text-gray-800 col-span-1')}
-                        ${renderStatItem('N/A o Parcial', stats.noAplicaParcial, 'bg-amber-100 text-amber-800 col-span-1')}
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-lg">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">Cumplimiento por Etapa del Contrato</h3>
-                            <div style="height: 350px;">
-                                <canvas id="managerRadarChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col justify-center">
-                            <div style="height: 300px;">
-                                <canvas id="managerPieChart"></canvas>
-                            </div>
-                            <p class="text-center text-sm text-gray-500 mt-4">La gráfica muestra la distribución de cumplimiento de los 31 ítems.</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        /**
-         * Función principal que renderiza el contenido según la pestaña activa.
-         */
-        function renderApp() {
-            const root = document.getElementById('root');
-            if (!root) return;
-
-            // 1. Renderizar la estructura base y la navegación
-            const navHtml = `
-                <header class="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="flex justify-between items-center py-4">
-                            <h1 class="text-3xl font-extrabold text-blue-700">Auditoría DACP</h1>
-                            <nav class="flex space-x-6">
-                                <a href="#" id="tab-dashboard" onclick="setState({ activeTab: 'dashboard' })" class="py-2 text-lg font-medium text-gray-500 hover:text-blue-600 transition duration-150 ${state.activeTab === 'dashboard' ? 'tab-active' : ''}">Dashboard</a>
-                                <a href="#" id="tab-checklist" onclick="setState({ activeTab: 'checklist' })" class="py-2 text-lg font-medium text-gray-500 hover:text-blue-600 transition duration-150 ${state.activeTab === 'checklist' ? 'tab-active' : ''}">Lista de Chequeo</a>
-                                <a href="#" id="tab-manager" onclick="setState({ activeTab: 'manager' })" class="py-2 text-lg font-medium text-gray-500 hover:text-blue-600 transition duration-150 ${state.activeTab === 'manager' ? 'tab-active' : ''}">Manager</a>
-                            </nav>
-                        </div>
-                    </div>
-                </header>
-            `;
-            
-            let contentHtml = '';
-            let dacpStats, checklist, checklistStats, managerStats;
-
-            // Pre-cálculo de estadísticas y obtención de data relevante
-            if (state.activeTab === 'dashboard') {
-                dacpStats = calcularEstadisticas(state.dacpActivities);
-                contentHtml = renderDACPActivities(dacpStats);
-            } else if (state.activeTab === 'checklist') {
-                checklist = getCurrentChecklist();
-                checklistStats = calculateChecklistStats(checklist);
-                contentHtml = renderContractChecklist(checklistStats);
-            } else if (state.activeTab === 'manager') {
-                checklist = getManagerChecklist();
-                managerStats = calculateChecklistStats(checklist);
-                contentHtml = renderConsolidatedManager(managerStats);
+            // Destruir la instancia anterior si existe
+            if (complianceChartInstance) {
+                complianceChartInstance.destroy();
             }
 
-            // 2. Insertar el HTML en el DOM
-            root.innerHTML = navHtml + `<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">${contentHtml}</div>`;
-
-            // 3. Destruir e inicializar los gráficos AHORA que el HTML está en el DOM
-            destroyCharts(); 
-            
-            // Usar setTimeout(0) para asegurar que el DOM ha sido renderizado.
-            setTimeout(() => {
-                if (state.activeTab === 'dashboard') {
-                    renderDashboardCharts(dacpStats);
-                } else if (state.activeTab === 'checklist') {
-                    renderChecklistStageRadar(checklist);
-                } else if (state.activeTab === 'manager') {
-                    if (state.consolidatedContractId) { // Solo si hay un contrato seleccionado
-                        renderManagerRadarChart(managerStats);
-                        renderManagerPieChart(managerStats);
+            complianceChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cumple', 'No Cumple', 'No Evaluado'],
+                    datasets: [{
+                        data: [stats.cumplidos, stats.noCumplidos, stats.noEvaluados],
+                        backgroundColor: ['#10b981', '#ef4444', '#9ca3af'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: false }
                     }
                 }
-            }, 0); 
+            });
+        }
+        
+        // Función de renderizado para la tabla de actividades DACP
+        function renderActivitiesTable(activities) {
+            const tableBody = document.getElementById('activities-table').querySelector('tbody');
+            const tableHead = document.getElementById('activities-table').querySelector('thead');
+            tableBody.innerHTML = '';
+            
+            // Renderizar encabezados dinámicamente
+            if (activities.length > 0) {
+                 const headers = Object.keys(activities[0]);
+                 const headerRow = `<tr>${headers.map(h => `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h}</th>`).join('')}</tr>`;
+                 tableHead.innerHTML = headerRow;
+            }
+
+            activities.forEach(activity => {
+                const row = tableBody.insertRow();
+                // Definir el orden de las columnas para renderizar
+                const fields = Object.keys(activity); 
+
+                fields.forEach(key => {
+                    const cell = row.insertCell();
+                    cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 border-b';
+                    
+                    if (key === 'cumplimiento') {
+                        // Campo de selección para cumplimiento
+                        cell.innerHTML = `
+                            <select onchange="handleActivityChange(${activity.id}, 'cumplimiento', this.value)" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option value="" ${activity[key] === null || activity[key] === '' ? 'selected' : ''}>Seleccione</option>
+                                <option value="Cumple" ${activity[key] === 'Cumple' ? 'selected' : ''}>Cumple</option>
+                                <option value="No Cumple" ${activity[key] === 'No Cumple' ? 'selected' : ''}>No Cumple</option>
+                            </select>
+                        `;
+                    } else if (key === 'observaciones' || key === 'fechaEvaluacion') {
+                        // Campos de texto para observaciones y fecha
+                        cell.innerHTML = `<input type="text" value="${activity[key] || ''}" onchange="handleActivityChange(${activity.id}, '${key}', this.value)" class="table-textarea" />`;
+                    } else {
+                        // Otros campos solo lectura
+                        cell.textContent = activity[key];
+                    }
+                });
+            });
+        }
+        
+        // Función de renderizado para la tabla de lista de chequeo
+        function renderChecklistTable(checklist, contractId) {
+            const tableBody = document.getElementById('checklist-table').querySelector('tbody');
+            const tableHead = document.getElementById('checklist-table').querySelector('thead');
+            tableBody.innerHTML = '';
+
+            // Encabezados Fijos
+            const headers = ["ID", "Etapa", "Aspecto", "SECOP II - Cumple", "SECOP II - No Cumple", "CARPETA FISICA - Cumple", "CARPETA FISICA - No Cumple", "CARPETA FISICA - No Aplica/ Parcialmente", "Evidencia", "Obs. Física", "Obs. SECOP"];
+            const headerRow = `<tr>${headers.map(h => `<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h}</th>`).join('')}</tr>`;
+            tableHead.innerHTML = headerRow;
+
+            checklist.forEach(item => {
+                const row = tableBody.insertRow();
+                const fields = ["id", "etapa", "aspecto", "SECOP II - Cumple", "SECOP II - No Cumple", "CARPETA FISICA - Cumple", "CARPETA FISICA - No Cumple", "CARPETA FISICA - No Aplica/ Parcialmente", "evidencia", "obs_fisica", "obs_secop"];
+
+                fields.forEach(field => {
+                    const cell = row.insertCell();
+                    cell.className = 'px-3 py-2 whitespace-nowrap text-sm text-gray-700 border-b';
+
+                    if (field === 'id' || field === 'etapa' || field === 'aspecto') {
+                        cell.textContent = item[field];
+                    } else if (field.includes('Cumple') || field.includes('No Cumple') || field.includes('No Aplica')) {
+                        // Input text para marcar con 'X' (o dejar vacío)
+                        cell.innerHTML = `<input type="text" value="${item[field] || ''}" onchange="handleChecklistChange('${contractId}', ${item.id}, '${field}', this.value)" class="table-textarea text-center h-8" maxlength="1" style="width: 40px;" />`;
+                    } else if (field === 'evidencia' || field === 'obs_fisica' || field === 'obs_secop') {
+                         // Textarea para evidencias y observaciones
+                         cell.innerHTML = `<textarea onchange="handleChecklistChange('${contractId}', ${item.id}, '${field}', this.value)" class="table-textarea">${item[field] || ''}</textarea>`;
+                    }
+                });
+            });
+        }
+        
+        // Función que renderiza la lista de contratos en el select
+        function renderContractSelect(contractIds, currentId) {
+            const selectElement = document.getElementById('contract-select');
+            selectElement.innerHTML = ''; // Limpiar opciones anteriores
+
+            if (contractIds.length === 0) {
+                 selectElement.innerHTML = '<option value="">No hay contratos</option>';
+            }
+            
+            contractIds.forEach(id => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = id;
+                if (id === currentId) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        /** Renderiza la aplicación completa basado en el estado actual. */
+        function renderApp() {
+            // 1. Manejo de Pestañas
+            document.querySelectorAll('.tab-view').forEach(view => {
+                view.style.display = 'none';
+            });
+            document.getElementById(`${state.activeTab}-view`).style.display = 'block';
+
+            document.querySelectorAll('#tab-container button').forEach(button => {
+                button.classList.remove('tab-active');
+            });
+            document.getElementById(`tab-${state.activeTab}`).classList.add('tab-active');
+
+
+            // 2. Renderizado Condicional
+            if (state.activeTab === 'dashboard') {
+                renderComplianceChart(state.dacpActivities);
+                // Aquí se llamarían a otras funciones de renderizado de gráficos y resumen
+            } else if (state.activeTab === 'activities') {
+                renderActivitiesTable(state.dacpActivities);
+            } else if (state.activeTab === 'checklist') {
+                const contractIds = Object.keys(state.contracts);
+                renderContractSelect(contractIds, state.currentContractId);
+                const currentChecklist = getCurrentChecklist();
+                renderChecklistTable(currentChecklist, state.currentContractId);
+            } else if (state.activeTab === 'manager') {
+                 // Aquí se llamarían las funciones de renderizado para la vista de gestor
+            }
+        }
+        
+        // 7. EXPORTACIÓN DE DATOS (Helper para crear CSV/Excel)
+        // -----------------------------------------------------------------
+
+        function jsonToCsv(arr) {
+            // Implementación de la función de conversión de JSON a CSV
+            if (arr.length === 0) return '';
+            const headers = Object.keys(arr[0]);
+            
+            // Función para limpiar valores y encerrarlos en comillas si contienen el delimitador
+            const cleanValue = (value) => {
+                const str = String(value || '').replace(/\n/g, ' ').replace(/"/g, '""');
+                return str.includes(';') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+            };
+
+            const csv = [
+                headers.map(cleanValue).join(';'), // Encabezados separados por punto y coma
+                ...arr.map(row => headers.map(fieldName => cleanValue(row[fieldName])).join(';'))
+            ].join('\n');
+            return csv;
+        }
+
+        function downloadCsv(csv, filename) {
+            // Se usa el tipo 'text/csv;charset=utf-8' y se añade un BOM para compatibilidad con Excel
+            const bom = '\ufeff'; // Byte Order Mark para asegurar que Excel lo abra con UTF-8
+            const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function exportToExcel() {
+            const csv = jsonToCsv(state.dacpActivities);
+            downloadCsv(csv, "Actividades_DACP.csv");
+        }
+        
+        function exportChecklistToExcel() {
+            const checklist = getCurrentChecklist();
+            if (checklist.length === 0) {
+                alert("No hay lista de chequeo para exportar. Seleccione un contrato.");
+                return;
+            }
+            const csv = jsonToCsv(checklist);
+            downloadCsv(csv, `Checklist_${state.currentContractId}.csv`);
+        }
+        
+        function exportManagerStatsToExcel() {
+             // Lógica de exportación de la vista de gestor (a implementar si es necesario)
+             alert("Exportación de estadísticas de gestor no implementada aún.");
         }
 
 
-        // =================================================================
-        // 6. INICIO DE LA APLICACIÓN
-        // =================================================================
+        // 8. INICIO DE LA APLICACIÓN
+        // -----------------------------------------------------------------
 
         window.onload = async function() {
-            // 1. Exponer las funciones al ámbito global para que el HTML pueda llamarlas
-            window.setState = setState;
+            // Exponer las funciones al ámbito global para que el HTML pueda llamarlas
             window.handleActivityChange = handleActivityChange;
             window.handleChecklistChange = handleChecklistChange;
             window.handleCreateNewContract = handleCreateNewContract;
@@ -1258,10 +618,7 @@
             window.handleManagerSelectChange = handleManagerSelectChange; 
             window.exportToExcel = exportToExcel;
             window.exportChecklistToExcel = exportChecklistToExcel;
-            window.exportManagerStatsToExcel = exportManagerStatsToExcel; 
-            window.getActividadesFiltradas = getActividadesFiltradas;
-            window.getCurrentChecklist = getCurrentChecklist;
-            window.getManagerChecklist = getManagerChecklist; 
+            window.exportManagerStatsToExcel = exportManagerStatsToExcel;
             
             // ⚠️ Mostrar mensaje de carga
             const root = document.getElementById('root');
@@ -1269,21 +626,16 @@
             loadingMessage.innerHTML = '<p class="text-center text-xl text-blue-600 mt-20">Cargando datos de la nube, por favor espere...</p>';
             root.appendChild(loadingMessage);
 
-            // 2. Esperar a cargar los datos de la nube antes de renderizar
+            // Esperar a cargar los datos de la nube antes de renderizar
             await fetchStateFromCloud();
             
-            // 3. Remover el mensaje de carga
+            // Remover el mensaje de carga
             root.removeChild(loadingMessage);
 
-            // 4. Finalmente, renderizar la aplicación con los datos cargados
+            // Finalmente, renderizar la aplicación con los datos cargados
             renderApp();
         };
 
     </script>
 </body>
 </html>
-
-
-
-
-
