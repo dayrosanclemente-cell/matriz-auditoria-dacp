@@ -45,7 +45,7 @@
                 <button id="tab-dashboard" onclick="setActiveTab('dashboard')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Dashboard</button>
                 <button id="tab-activities" onclick="setActiveTab('activities')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Actividades DACP</button>
                 <button id="tab-checklist" onclick="setActiveTab('checklist')" class="px-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:border-blue-300 border-b-2 border-transparent">Lista de Chequeo Contractual</button>
-                </div>
+            </div>
         </header>
 
         <main class="p-6">
@@ -103,8 +103,7 @@
                     </table>
                 </div>
             </div>
-            
-            </main>
+        </main>
     </div>
 
     <script>
@@ -132,11 +131,11 @@
             {id:12, tipo:'Externa', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'Publicaciones informes de supervision en el SECOP II', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:13, tipo:'Externa', proceso:'DELEGACIONES', funcion:'PENDIENTE DEFINIR', actividad:'Remisión de solicitud formal con documentos precontractuales', informe:'PENDIENTE DEFINIR', frecuencia:'Según necesidad', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:14, tipo:'Externa', proceso:'EVALUACIÓN DE PROVEEDORES', funcion:'PENDIENTE DEFINIR', actividad:'Revaluación de proveedores - Consolidación en hoja de cálculo', informe:'PENDIENTE DEFINIR', frecuencia:'Semestralmente', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
-            {id:15, tipo:'Externa', proceso:'GESTIÓN DEL CONOCIMIENTO', funcion:'PENDIENTE DEFINIR', actividad:'Lecciones Aprendidas - Compras públicas frecuentes, riesgosas, complejas', informe:'PENDIENTE DEFINIR', frecuencia:'Anualmente', reportaA:'PENDIENTE DEFINIR', importancia:65, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
+            {id:15, tipo:'Externa', proceso:'GESTIÓN DEL CONOCIMIENTO', funcion:'PENDIENTE DEFINIR', actividad:'Lecciones Aprendidas - Compras públicas frecuentes, riesgosas, complejas', informe:'PENDIENTE DEFINIR', frecuencia:'Anualmente', reportaA:'PENDIENTE DEFINIR', importancia:65, cumplimiento:null, observaciones:'', fechaEvaluacion:''}, // <-- Revisar aquí la coma si hay error de sintaxis en la siguiente línea
             {id:16, tipo:'Externa', proceso:'COMPRAS RESPONSABLES', funcion:'PENDIENTE DEFINIR', actividad:'Formatos de seguimiento - Sostenibilidad Ambiental, Inclusión Social e Innovación', informe:'PENDIENTE DEFINIR', frecuencia:'Febrero y julio', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''}
         ];
         
-        // Plantilla de lista de chequeo (31 ítems) - Cadenas limpiadas para evitar el "SyntaxError"
+        // Plantilla de lista de chequeo (31 ítems)
         const initialChecklistTemplate = [
             {id:1, etapa:"Planeación del Contrato", aspecto:"Se cuenta con certificado de idoneidad", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
             {id:2, etapa:"Planeación del Contrato", aspecto:"Acto de delegación para contratar", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
@@ -576,7 +575,10 @@
         // -----------------------------------------------------------------
 
         window.onload = async function() {
-            // Exponer las funciones al ámbito global para que el HTML pueda llamarlas
+            // 🚀 CORRECCIÓN CRÍTICA: Exponer setActiveTab para que los botones funcionen
+            window.setActiveTab = setActiveTab;
+            
+            // Exponer otras funciones al ámbito global para que el HTML pueda llamarlas
             window.handleActivityChange = handleActivityChange;
             window.handleChecklistChange = handleChecklistChange;
             window.handleCreateNewContract = handleCreateNewContract;
