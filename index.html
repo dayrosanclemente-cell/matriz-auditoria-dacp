@@ -46,7 +46,7 @@
         // 0. CONFIGURACIÓN EN LA NUBE (Apps Script URL)
         // =================================================================
 
-        // 🟢 ¡VERIFIQUE! Asegúrese de que esta URL apunta a su Google Apps Script desplegado.
+        // 🟢 ¡PEGA TU NUEVO URL AQUÍ! Reemplace TODO este string con el URL de su Apps Script recién desplegado.
         const API_URL = 'https://script.google.com/macros/s/AKfycbzD-DiWojvY3OdMkr_Bjy414kF7ltp3ZrEX-AvcptSleYDSMJ968GVU2Vuh8c7xdzP/exec';
 
 
@@ -1184,7 +1184,6 @@
 
         /**
          * Función principal que renderiza el contenido según la pestaña activa.
-         * ⚠️ CORRECCIÓN CLAVE: Inicializa los gráficos DENTRO de un setTimeout(0)
          */
         function renderApp() {
             const root = document.getElementById('root');
@@ -1229,7 +1228,7 @@
             // 3. Destruir e inicializar los gráficos AHORA que el HTML está en el DOM
             destroyCharts(); 
             
-            // ⚠️ MODIFICACIÓN CLAVE: Usar setTimeout(0) para asegurar que el DOM ha sido renderizado.
+            // Usar setTimeout(0) para asegurar que el DOM ha sido renderizado.
             setTimeout(() => {
                 if (state.activeTab === 'dashboard') {
                     renderDashboardCharts(dacpStats);
@@ -1241,7 +1240,7 @@
                         renderManagerPieChart(managerStats);
                     }
                 }
-            }, 0); // Micro-delay para asegurar que el canvas es visible y tiene contexto.
+            }, 0); 
         }
 
 
@@ -1264,7 +1263,7 @@
             window.getCurrentChecklist = getCurrentChecklist;
             window.getManagerChecklist = getManagerChecklist; 
             
-            // ⚠️ NUEVO: Mostrar mensaje de carga
+            // ⚠️ Mostrar mensaje de carga
             const root = document.getElementById('root');
             const loadingMessage = document.createElement('div');
             loadingMessage.innerHTML = '<p class="text-center text-xl text-blue-600 mt-20">Cargando datos de la nube, por favor espere...</p>';
