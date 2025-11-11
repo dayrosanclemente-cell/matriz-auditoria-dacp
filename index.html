@@ -326,7 +326,7 @@
                 if (item.id === id) {
                     const newItem = { ...item };
 
-                    // Si es un campo de cumplimiento (radio button), desmarca los campos opuestos de la misma categoría
+                    // Si es un campo de cumplimiento (radio button, ahora checkbox con mutual exclusion), desmarca los campos opuestos de la misma categoría
                     if (campo.includes('Cumple') || campo.includes('No Cumple') || campo.includes('No Aplica')) {
                         // Determinar la columna (SECOP II o CARPETA FISICA)
                         const columnKey = campo.split(' - ')[0];
@@ -454,7 +454,7 @@
             const csvRows = [];
             const headersRow1 = [
                 "N°", "ETAPA", "ASPECTO A EVALUAR",
-                "SECOP II", "", "", "CARPETA FISICA", "", "", "",
+                "SECOP II", "", "CARPETA FISICA", "", "", "",
                 "EVIDENCIA DOCUMENTAL", "OBSERVACION CARPETA FISICA", "OBSERVACION SECOP II"
             ];
             const headersRow2 = [
