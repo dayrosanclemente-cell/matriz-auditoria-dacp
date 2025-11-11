@@ -139,8 +139,8 @@
 
         // ⚠️ Nota: Los datos iniciales serán reemplazados por lo que se cargue de la nube
         // El estado inicial (si no hay datos guardados)
+        // Cadenas limpiadas para evitar el "SyntaxError: Unexpected string"
         const initialActivities = [
-            // Basado en el JSON que proporcionó en la pregunta anterior (16 actividades)
             {id:1, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'ESTRUCTURACIÓN DEL PROCESO DE CONTRATACIÓN', informe:'PENDIENTE DEFINIR', frecuencia:'TRIMESTRAL', reportaA:'PENDIENTE DEFINIR', importancia:95, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:2, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'VALIDACION APLICATIVO CONTRATISTA', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:85, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:3, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'VALIDACION HOJA DE VIDA DE SIGEP', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:80, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
@@ -159,7 +159,7 @@
             {id:16, tipo:'Externa', proceso:'COMPRAS RESPONSABLES', funcion:'PENDIENTE DEFINIR', actividad:'Formatos de seguimiento - Sostenibilidad Ambiental, Inclusión Social e Innovación', informe:'PENDIENTE DEFINIR', frecuencia:'Febrero y julio', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''}
         ];
         
-        // Plantilla de lista de chequeo (31 ítems) - Usando los datos que usted proporcionó
+        // Plantilla de lista de chequeo (31 ítems) - Cadenas limpiadas para evitar el "SyntaxError"
         const initialChecklistTemplate = [
             {id:1, etapa:"Planeación del Contrato", aspecto:"Se cuenta con certificado de idoneidad", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
             {id:2, etapa:"Planeación del Contrato", aspecto:"Acto de delegación para contratar", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
@@ -264,7 +264,7 @@
             } catch (error) {
                 console.error("🔴 Error CRÍTICO de conexión al cargar datos:", error); 
                 // Esto suele ser el error CORS
-                alert("Error de conexión (CORS). Verifique que su Apps Script esté bien desplegado y que la API_URL sea la correcta.");
+                alert("Error de conexión (CORS o API). Verifique que su Apps Script esté bien desplegado y que la API_URL sea la correcta.");
             }
         }
 
@@ -558,6 +558,7 @@
             
             // Función para limpiar valores y encerrarlos en comillas si contienen el delimitador
             const cleanValue = (value) => {
+                // Reemplazamos saltos de línea y comillas dobles internas
                 const str = String(value || '').replace(/\n/g, ' ').replace(/"/g, '""');
                 return str.includes(';') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
             };
@@ -639,4 +640,3 @@
     </script>
 </body>
 </html>
-
