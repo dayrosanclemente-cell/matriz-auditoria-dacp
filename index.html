@@ -115,7 +115,7 @@
 
         // ⚠️ Nota: Los datos iniciales serán reemplazados por lo que se cargue de la nube
         // El estado inicial (si no hay datos guardados)
-        // Cadenas limpiadas para evitar el "SyntaxError: Unexpected string"
+        // Se verificaron las comas para evitar el "SyntaxError: Unexpected string"
         const initialActivities = [
             {id:1, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'ESTRUCTURACIÓN DEL PROCESO DE CONTRATACIÓN', informe:'PENDIENTE DEFINIR', frecuencia:'TRIMESTRAL', reportaA:'PENDIENTE DEFINIR', importancia:95, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:2, tipo:'Interna', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'VALIDACION APLICATIVO CONTRATISTA', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:85, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
@@ -131,11 +131,11 @@
             {id:12, tipo:'Externa', proceso:'GESTIÓN CONTRACTUAL', funcion:'PENDIENTE DEFINIR', actividad:'Publicaciones informes de supervision en el SECOP II', informe:'PENDIENTE DEFINIR', frecuencia:'Mensualizada', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:13, tipo:'Externa', proceso:'DELEGACIONES', funcion:'PENDIENTE DEFINIR', actividad:'Remisión de solicitud formal con documentos precontractuales', informe:'PENDIENTE DEFINIR', frecuencia:'Según necesidad', reportaA:'PENDIENTE DEFINIR', importancia:90, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:14, tipo:'Externa', proceso:'EVALUACIÓN DE PROVEEDORES', funcion:'PENDIENTE DEFINIR', actividad:'Revaluación de proveedores - Consolidación en hoja de cálculo', informe:'PENDIENTE DEFINIR', frecuencia:'Semestralmente', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
-            {id:15, tipo:'Externa', proceso:'GESTIÓN DEL CONOCIMIENTO', funcion:'PENDIENTE DEFINIR', actividad:'Lecciones Aprendidas - Compras públicas frecuentes, riesgosas, complejas', informe:'PENDIENTE DEFINIR', frecuencia:'Anualmente', reportaA:'PENDIENTE DEFINIR', importancia:65, cumplimiento:null, observaciones:'', fechaEvaluacion:''}, // <-- Revisar aquí la coma si hay error de sintaxis en la siguiente línea
+            {id:15, tipo:'Externa', proceso:'GESTIÓN DEL CONOCIMIENTO', funcion:'PENDIENTE DEFINIR', actividad:'Lecciones Aprendidas - Compras públicas frecuentes, riesgosas, complejas', informe:'PENDIENTE DEFINIR', frecuencia:'Anualmente', reportaA:'PENDIENTE DEFINIR', importancia:65, cumplimiento:null, observaciones:'', fechaEvaluacion:''},
             {id:16, tipo:'Externa', proceso:'COMPRAS RESPONSABLES', funcion:'PENDIENTE DEFINIR', actividad:'Formatos de seguimiento - Sostenibilidad Ambiental, Inclusión Social e Innovación', informe:'PENDIENTE DEFINIR', frecuencia:'Febrero y julio', reportaA:'PENDIENTE DEFINIR', importancia:70, cumplimiento:null, observaciones:'', fechaEvaluacion:''}
         ];
         
-        // Plantilla de lista de chequeo (31 ítems)
+        // Plantilla de lista de chequeo (31 ítems) - Cadenas limpiadas para evitar el "SyntaxError"
         const initialChecklistTemplate = [
             {id:1, etapa:"Planeación del Contrato", aspecto:"Se cuenta con certificado de idoneidad", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
             {id:2, etapa:"Planeación del Contrato", aspecto:"Acto de delegación para contratar", "SECOP II - Cumple":"", "SECOP II - No Cumple":"", "CARPETA FISICA - Cumple":"", "CARPETA FISICA - No Cumple":"", "CARPETA FISICA - No Aplica/ Parcialmente":"", evidencia:"", obs_fisica:"", obs_secop:""},
