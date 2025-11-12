@@ -1262,10 +1262,11 @@
 
 
    // =================================================================
-// 8. INICIALIZACIÓN DE LA APLICACIÓN (CORREGIDO FINAL)
+// 8. INICIALIZACIÓN DE LA APLICACIÓN (CÓDIGO FINAL CORREGIDO)
 // =================================================================
 window.onload = async () => {
     // 1. Mapear todas las funciones globales
+    // (Asegúrate de que todas tus funciones handle/export/get están mapeadas aquí)
     window.handleActivityChange = handleActivityChange;
     window.handleChecklistChange = handleChecklistChange;
     window.handleCreateNewContract = handleCreateNewContract;
@@ -1289,7 +1290,7 @@ window.onload = async () => {
 
     try {
         // 3. Esperar a cargar los datos de la nube.
-        // NOTA: fetchStateFromCloud() llama a setState(), que llama a renderApp().
+        // Esto llamará a renderApp() si tiene éxito.
         await fetchStateFromCloud();
         
     } catch (e) {
@@ -1298,19 +1299,17 @@ window.onload = async () => {
         renderApp(); 
     } finally {
         // 4. CORRECCIÓN FINAL: Solo remueve el mensaje si aún es un hijo del elemento raíz.
-        // Esto previene el NotFoundError.
+        // ESTA LÍNEA ES LA CLAVE para evitar el NotFoundError.
         if (root.contains(loadingMessage)) {
             root.removeChild(loadingMessage);
         }
     }
-    
-    // 🛑 IMPORTANTE: Ya NO se necesita llamar a renderApp() aquí, porque ya se hizo
-    // en el bloque try (vía setState) o en el bloque catch.
 };
 
     </script>
 </body>
 </html>
+
 
 
 
