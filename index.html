@@ -1261,47 +1261,50 @@
         }
 
 
-       // =================================================================
-// 8. INICIALIZACIÓN DE LA APLICACIÓN (CORREGIDO)
+     // =================================================================
+// 8. INICIALIZACIÓN DE LA APLICACIÓN (CORREGIDO PARA NotFoundError)
 // =================================================================
 window.onload = async () => {
-    // Mapear funciones globales (se mantiene el mapeo)
+    // 1. Mapear funciones globales
     window.handleActivityChange = handleActivityChange;
-    // ... (otras funciones del frontend deben estar aquí) ...
+    window.handleContractSelectChange = handleContractSelectChange; 
+    window.handleManagerSelectChange = handleManagerSelectChange; 
+    window.handleFilterChange = handleFilterChange; 
+    window.importChecklistFromCSV = importChecklistFromCSV; 
+    window.exportDACPActivitiesToExcel = exportDACPActivitiesToExcel; 
+    window.exportChecklistToExcel = exportChecklistToExcel;
+    window.exportManagerStatsToExcel = exportManagerStatsToExcel; 
+    window.getActividadesFiltradas = getActividadesFiltradas;
+    window.getCurrentChecklist = getCurrentChecklist;
     window.getManagerChecklist = getManagerChecklist; 
     
-    // 1. Mostrar mensaje de carga
+    // 2. Mostrar mensaje de carga
     const root = document.getElementById('root');
     const loadingMessage = document.createElement('div');
     loadingMessage.innerHTML = '<p class="text-center text-xl text-blue-600 mt-20">Cargando datos de la nube, por favor espere...</p>';
     root.appendChild(loadingMessage);
 
     try {
-        // 2. Esperar a cargar los datos de la nube.
-        // NOTA: fetchStateFromCloud llama a setState, que llama a renderApp().
+        // 3. Esperar a cargar los datos de la nube.
+        // fetchStateFromCloud() llama a setState(), que llama a renderApp().
         await fetchStateFromCloud();
         
     } catch (e) {
         console.error("Error fatal en fetchStateFromCloud durante la inicialización:", e);
-        // Si hay un error, aún así renderizamos la aplicación con datos por defecto.
+        // Si hay un error (como el de CORS), aún así renderizamos con datos por defecto.
         renderApp(); 
     } finally {
-        // 3. CORRECCIÓN FINAL: Garantizamos que el mensaje de carga se elimina, 
-        // sin importar si fue removido antes por renderApp() o si hubo un error.
-        
-        // Si loadingMessage sigue siendo un hijo de root (la situación que provoca el error)
+        // 4. CORRECCIÓN FINAL: Solo remueve el mensaje si aún es un hijo del elemento raíz.
         if (root.contains(loadingMessage)) {
             root.removeChild(loadingMessage);
-        // Si el elemento loadingMessage fue movido o tiene padre (otra capa de seguridad)
-        } else if (loadingMessage.parentNode) {
-            loadingMessage.parentNode.removeChild(loadingMessage);
         }
     }
     
-    // La primera llamada a renderApp() ya fue ejecutada por setState() dentro de fetchStateFromCloud().
+    // La primera llamada a renderApp() ya fue ejecutada dentro del try/catch.
 };
 
     </script>
 </body>
 </html>
+
 
