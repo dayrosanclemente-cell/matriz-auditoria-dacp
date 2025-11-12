@@ -1289,12 +1289,10 @@ window.onload = async () => {
 
     try {
         // 3. Esperar a cargar los datos de la nube.
-        // fetchStateFromCloud llama a setState(), que llama a renderApp().
         await fetchStateFromCloud();
         
     } catch (e) {
         console.error("Error fatal en fetchStateFromCloud durante la inicialización:", e);
-        // Si hay un error, aún así renderizamos con datos por defecto.
         renderApp(); 
     } finally {
         // 4. CORRECCIÓN CLAVE: Solo remueve el mensaje si aún es un hijo del elemento raíz.
@@ -1306,6 +1304,7 @@ window.onload = async () => {
     </script>
 </body>
 </html>
+
 
 
 
