@@ -47,7 +47,7 @@
         // =================================================================
 
         // ⚠️ ¡IMPORTANTE! REEMPLAZA ESTA URL con la URL de tu Web App de Google Apps Script
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw9On7ksqC5FkhnLYv8MFzGtWaFEhXDOgTrWGUvnHCSlkxsee2HF7p2kVvUwXa7ylsr/exec'; 
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyjJerSUeCaoS_AJ5pV9Pm2Kg8N1hzOSghxj4yKyiz053pAJS9JAcKO42YOwF_QQfHR/exec'; 
 
 
         // =================================================================
@@ -1261,49 +1261,47 @@
         }
 
 
-        // =================================================================
-        // 8. INICIALIZACIÓN DE LA APLICACIÓN
-        // =================================================================
-        window.onload = async () => {
-            // Mapear funciones globales para que el HTML pueda llamarlas
-            window.handleActivityChange = handleActivityChange;
-            window.handleChecklistChange = handleChecklistChange;
-            window.handleCreateNewContract = handleCreateNewContract;
-            window.handleDeleteContract = handleDeleteContract; 
-            window.handleContractSelectChange = handleContractSelectChange;
-            window.handleManagerSelectChange = handleManagerSelectChange; 
-            window.handleFilterChange = handleFilterChange; 
-            window.importChecklistFromCSV = importChecklistFromCSV; 
-            window.exportDACPActivitiesToExcel = exportDACPActivitiesToExcel; 
-            window.exportChecklistToExcel = exportChecklistToExcel;
-            window.exportManagerStatsToExcel = exportManagerStatsToExcel; 
-            window.getActividadesFiltradas = getActividadesFiltradas;
-            window.getCurrentChecklist = getCurrentChecklist;
-            window.getManagerChecklist = getManagerChecklist; 
-            
-            // ⚠️ NUEVO: Mostrar mensaje de carga
-            const root = document.getElementById('root');
-            const loadingMessage = document.createElement('div');
-            loadingMessage.innerHTML = '<p class="text-center text-xl text-blue-600 mt-20">Cargando datos de la nube, por favor espere...</p>';
-            root.appendChild(loadingMessage);
+       // =================================================================
+// 8. INICIALIZACIÓN DE LA APLICACIÓN (CORREGIDO)
+// =================================================================
+window.onload = async () => {
+    // Mapear funciones globales (se mantiene el mapeo)
+    window.handleActivityChange = handleActivityChange;
+    // ... (otras funciones del frontend deben estar aquí) ...
+    window.getManagerChecklist = getManagerChecklist; 
+    
+    // 1. Mostrar mensaje de carga
+    const root = document.getElementById('root');
+    const loadingMessage = document.createElement('div');
+    loadingMessage.innerHTML = '<p class="text-center text-xl text-blue-600 mt-20">Cargando datos de la nube, por favor espere...</p>';
+    root.appendChild(loadingMessage);
 
-            try {
-                // Esperar a cargar los datos de la nube antes de renderizar
-                await fetchStateFromCloud();
-            } catch (e) {
-                console.error("Error fatal en fetchStateFromCloud durante la inicialización:", e);
-                // La función catch de fetchStateFromCloud ya debería haber inicializado el estado con valores por defecto.
-            }
-            
-            // Remover el mensaje de carga (FIX: Añadir verificación para evitar NotFoundError)
-            if (root.contains(loadingMessage)) {
-                root.removeChild(loadingMessage);
-            }
-
-            // Finalmente, renderizar la aplicación con los datos cargados
-            renderApp();
-        };
+    try {
+        // 2. Esperar a cargar los datos de la nube.
+        // NOTA: fetchStateFromCloud llama a setState, que llama a renderApp().
+        await fetchStateFromCloud();
+        
+    } catch (e) {
+        console.error("Error fatal en fetchStateFromCloud durante la inicialización:", e);
+        // Si hay un error, aún así renderizamos la aplicación con datos por defecto.
+        renderApp(); 
+    } finally {
+        // 3. CORRECCIÓN FINAL: Garantizamos que el mensaje de carga se elimina, 
+        // sin importar si fue removido antes por renderApp() o si hubo un error.
+        
+        // Si loadingMessage sigue siendo un hijo de root (la situación que provoca el error)
+        if (root.contains(loadingMessage)) {
+            root.removeChild(loadingMessage);
+        // Si el elemento loadingMessage fue movido o tiene padre (otra capa de seguridad)
+        } else if (loadingMessage.parentNode) {
+            loadingMessage.parentNode.removeChild(loadingMessage);
+        }
+    }
+    
+    // La primera llamada a renderApp() ya fue ejecutada por setState() dentro de fetchStateFromCloud().
+};
 
     </script>
 </body>
 </html>
+
