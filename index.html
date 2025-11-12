@@ -1261,19 +1261,22 @@
         }
 
 
-     // =================================================================
-// 8. INICIALIZACIÓN DE LA APLICACIÓN (CORREGIDO PARA NotFoundError)
+   // =================================================================
+// 8. INICIALIZACIÓN DE LA APLICACIÓN (CORREGIDO FINAL)
 // =================================================================
 window.onload = async () => {
-    // 1. Mapear funciones globales
+    // 1. Mapear todas las funciones globales
     window.handleActivityChange = handleActivityChange;
-    window.handleContractSelectChange = handleContractSelectChange; 
-    window.handleManagerSelectChange = handleManagerSelectChange; 
-    window.handleFilterChange = handleFilterChange; 
-    window.importChecklistFromCSV = importChecklistFromCSV; 
-    window.exportDACPActivitiesToExcel = exportDACPActivitiesToExcel; 
+    window.handleChecklistChange = handleChecklistChange;
+    window.handleCreateNewContract = handleCreateNewContract;
+    window.handleDeleteContract = handleDeleteContract;
+    window.handleContractSelectChange = handleContractSelectChange;
+    window.handleManagerSelectChange = handleManagerSelectChange;
+    window.handleFilterChange = handleFilterChange;
+    window.importChecklistFromCSV = importChecklistFromCSV;
+    window.exportDACPActivitiesToExcel = exportDACPActivitiesToExcel;
     window.exportChecklistToExcel = exportChecklistToExcel;
-    window.exportManagerStatsToExcel = exportManagerStatsToExcel; 
+    window.exportManagerStatsToExcel = exportManagerStatsToExcel;
     window.getActividadesFiltradas = getActividadesFiltradas;
     window.getCurrentChecklist = getCurrentChecklist;
     window.getManagerChecklist = getManagerChecklist; 
@@ -1286,25 +1289,28 @@ window.onload = async () => {
 
     try {
         // 3. Esperar a cargar los datos de la nube.
-        // fetchStateFromCloud() llama a setState(), que llama a renderApp().
+        // NOTA: fetchStateFromCloud() llama a setState(), que llama a renderApp().
         await fetchStateFromCloud();
         
     } catch (e) {
         console.error("Error fatal en fetchStateFromCloud durante la inicialización:", e);
-        // Si hay un error (como el de CORS), aún así renderizamos con datos por defecto.
+        // Si hay un error, aún así renderizamos con datos por defecto.
         renderApp(); 
     } finally {
         // 4. CORRECCIÓN FINAL: Solo remueve el mensaje si aún es un hijo del elemento raíz.
+        // Esto previene el NotFoundError.
         if (root.contains(loadingMessage)) {
             root.removeChild(loadingMessage);
         }
     }
     
-    // La primera llamada a renderApp() ya fue ejecutada dentro del try/catch.
+    // 🛑 IMPORTANTE: Ya NO se necesita llamar a renderApp() aquí, porque ya se hizo
+    // en el bloque try (vía setState) o en el bloque catch.
 };
 
     </script>
 </body>
 </html>
+
 
 
