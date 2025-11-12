@@ -1289,6 +1289,7 @@ window.onload = async () => {
 
     try {
         // 3. Esperar a cargar los datos de la nube.
+        // fetchStateFromCloud llama a setState(), que llama a renderApp().
         await fetchStateFromCloud();
         
     } catch (e) {
@@ -1305,6 +1306,7 @@ window.onload = async () => {
     </script>
 </body>
 </html>
+
 
 
 
